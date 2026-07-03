@@ -1,6 +1,6 @@
 spring:
   application:
-    name: notification-service
+    name: codinviec-notification-service
   mail:
     host: smtp.gmail.com
     port: 587

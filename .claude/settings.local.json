@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(xargs grep *)",
+      "Bash(./mvnw compile *)",
+      "Bash(java -version)",
+      "Bash(javac -version)",
+      "Bash(grep -E \"\\\\.java$\")",
+      "Bash([ -f \"$OLD_FILE\" ])",
+      "Bash(sed -i s/CodinviecProductServiceApplicationTests/CodinviecPaymentServiceApplicationTests/g '/e/Wordspace/Backend study/Spring boot/final_project/codinviec/codinviec_payment_service/src/test/java/com/project/codinviec_payment_service/CodinviecPaymentServiceApplicationTests.java')",
+      "Bash(sed -i s/CodinviecProductServiceApplication/CodinviecPaymentServiceApplication/g '/e/Wordspace/Backend study/Spring boot/final_project/codinviec/codinviec_payment_service/src/test/java/com/project/codinviec_payment_service/CodinviecPaymentServiceApplicationTests.java')"
     ]
   }
 }
