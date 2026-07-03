@@ -2,7 +2,7 @@ spring:
   dotenv:
     enabled: true
   application:
-    name: auth-service
+    name: codinviec-auth-service
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}

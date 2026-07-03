@@ -24,6 +24,7 @@
         <module>codinviec_gateway_service</module>
         <module>codinviec_notification_service</module>
         <module>eureka_server_codinviec</module>
+        <module>codinviec_payment_service</module>
     </modules>
 
     <properties>
