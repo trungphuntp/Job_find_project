@@ -1,35 +1,45 @@
 package com.project.codinviec_notification_service.exception;
 
-import com.project.codinviec_notification_service.exception.event.SendEmailRegisterFail;
-import com.project.codinviec_notification_service.response.BaseResponse;
+import com.project.codinviec_notification_service.enums.CommonErrorCode;
+import com.project.codinviec_notification_service.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.time.Instant;
+
 @Slf4j
 @ControllerAdvice
-@RequiredArgsConstructor
 public class GlobalExceptionHandler {
-    // Lỗi gửi email
-    @ExceptionHandler(SendEmailRegisterFail.class)
-    public ResponseEntity<BaseResponse> handleSendEmailRegisterFailException(
-            SendEmailRegisterFail ex, HttpServletRequest request) {
-        log.error("SendEmailRegisterFail: {} | URI: {} | Method: {} | Message: {}",
-                ex.getClass().getSimpleName(),
-                request.getRequestURI(),
-                request.getMethod(),
-                ex.getMessage(),
-                ex);
 
-        String userMessage = ex.getMessage() != null && !ex.getMessage().isBlank()
-                ? ex.getMessage()
-                : "Gửi email thất bại!";
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(BaseResponse.error(userMessage, HttpStatus.CONFLICT));
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ErrorResponse> handleAppException(
+            AppException ex, HttpServletRequest request) {
+        log.error("AppException: code={} | URI: {} | Message: {}",
+                ex.getErrorCode().getCode(),
+                request.getRequestURI(),
+                ex.getMessage());
+
+        ErrorResponse response = ErrorResponse.builder()
+                .code(ex.getErrorCode().getCode())
+                .message(ex.getErrorCode().getMessage())
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
+        return ResponseEntity.status(ex.getErrorCode().getHttpStatus()).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnknown(Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error at {} {}: ", request.getMethod(), request.getRequestURI(), ex);
+        ErrorResponse response = ErrorResponse.builder()
+                .code(CommonErrorCode.INTERNAL_SERVER_ERROR.getCode())
+                .message(CommonErrorCode.INTERNAL_SERVER_ERROR.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
+        return ResponseEntity.internalServerError().body(response);
     }
 }

@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.IndustryDTO;
 import com.project.codinviec_core_service.entity.Industry;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.IndustryMapper;
 import com.project.codinviec_core_service.repository.IndustryRepository;
 import com.project.codinviec_core_service.request.IndustryRequest;
@@ -63,7 +64,7 @@ public class IndustryServiceImp implements IndustryService {
     @Override
     public IndustryDTO getById(int id) {
         Industry industry = industryRepository.findById(id).
-                orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Industry với ID: "+ id));
+                orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Industry với ID: "+ id));
         return industryMapper.toDTO(industry);
     }
 
@@ -78,7 +79,7 @@ public class IndustryServiceImp implements IndustryService {
     @Transactional
     public IndustryDTO update(int id, IndustryRequest request) {
         industryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Industry id: "+ id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Industry id: "+ id));
         Industry entity = industryMapper.updateIndustry(id, request);
         return industryMapper.toDTO(industryRepository.save(entity));
     }
@@ -87,7 +88,7 @@ public class IndustryServiceImp implements IndustryService {
     @Transactional
     public void delete(int id) {
         Industry industry = industryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Industry id: "+ id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Industry id: "+ id));
         industryRepository.delete(industry);
     }
 }

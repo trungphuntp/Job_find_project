@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.ExperienceDTO;
 import com.project.codinviec_core_service.entity.Experience;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.ExperienceMapper;
 import com.project.codinviec_core_service.repository.ExperienceRepository;
 import com.project.codinviec_core_service.request.ExperienceRequest;
@@ -44,7 +45,7 @@ public class ExperienceServiceImp implements ExperienceService {
     @Override
     public ExperienceDTO getExperienceById(Integer id) {
         Experience entity = experienceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id experience"));
         return experienceMapper.toDto(entity);
     }
 
@@ -60,7 +61,7 @@ public class ExperienceServiceImp implements ExperienceService {
     @Transactional
     public ExperienceDTO updateExperience(int id, ExperienceRequest request) {
         experienceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id experience"));
 
         Experience entity = experienceMapper.updateExperience(id, request);
         Experience updated = experienceRepository.save(entity);
@@ -71,7 +72,7 @@ public class ExperienceServiceImp implements ExperienceService {
     @Transactional
     public ExperienceDTO deleteExperience(int id) {
         Experience entity = experienceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id experience"));
         experienceRepository.delete(entity);
         return experienceMapper.toDto(entity);
     }

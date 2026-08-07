@@ -1,6 +1,7 @@
 package com.project.codinviec_core_service.service.file;
 
-import com.project.codinviec_core_service.exception.file.FileExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -24,7 +25,7 @@ public class FileServiceImp implements FileService {
     public String saveFiles(MultipartFile file) {
         try {
             if (file == null || file.isEmpty()) {
-                throw new FileExceptionHandler("Save file serevices lỗi");
+                throw new AppException(ResourceErrorCode.FILE_ERROR, "Save file services lỗi");
             }
 
             Path rootPath = Paths.get(root);
@@ -32,7 +33,6 @@ public class FileServiceImp implements FileService {
                 Files.createDirectories(rootPath);
             }
 
-            // Tạo tên file unique: timestamp_uuid_originalFilename
             String originalFilename = file.getOriginalFilename();
             String extension = "";
             if (originalFilename != null && originalFilename.contains(".")) {
@@ -49,8 +49,11 @@ public class FileServiceImp implements FileService {
 
             return uniqueFilename;
         }
+        catch (AppException e) {
+            throw e;
+        }
         catch (Exception e) {
-            throw new FileExceptionHandler();
+            throw new AppException(ResourceErrorCode.FILE_ERROR);
         }
     }
 
@@ -63,11 +66,14 @@ public class FileServiceImp implements FileService {
                 return resource;
             }
             else {
-                throw new FileExceptionHandler();
+                throw new AppException(ResourceErrorCode.FILE_ERROR);
             }
         }
+        catch (AppException e) {
+            throw e;
+        }
         catch (Exception e) {
-            throw new FileExceptionHandler();
+            throw new AppException(ResourceErrorCode.FILE_ERROR);
         }
     }
 
@@ -82,7 +88,7 @@ public class FileServiceImp implements FileService {
                 Files.delete(filePath);
             }
         } catch (Exception e) {
-            throw new FileExceptionHandler();
+            throw new AppException(ResourceErrorCode.FILE_ERROR);
         }
     }
 

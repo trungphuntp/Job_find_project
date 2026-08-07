@@ -1,7 +1,8 @@
 package com.project.codinviec_notification_service.event.consumer;
 
+import com.project.codinviec_notification_service.enums.NotificationErrorCode;
 import com.project.codinviec_notification_service.event.payload.VerifyRegisterPayload;
-import com.project.codinviec_notification_service.exception.event.SendEmailRegisterFail;
+import com.project.codinviec_notification_service.exception.AppException;
 import com.project.codinviec_notification_service.service.EmailTemplateService;
 import com.project.codinviec_notification_service.service.Imp.EmailServiceImp;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +32,9 @@ public class VerifyRegisterConsumer {
                     verifyRegisterPayload.getEmail(),
                     "Thông báo xác thực tài khoản!",
                     html);
-//            commit đi kafka
             ack.acknowledge();
         } catch (RuntimeException e) {
-            throw new SendEmailRegisterFail();
+            throw new AppException(NotificationErrorCode.SEND_VERIFY_EMAIL_FAIL);
         }
     }
 }

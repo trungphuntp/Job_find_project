@@ -3,8 +3,8 @@ package com.project.codinviec_core_service.service.imp;
 import com.project.codinviec_core_service.dto.CVUserDTO;
 import com.project.codinviec_core_service.entity.CVUser;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
-import com.project.codinviec_core_service.exception.security.UnauthorizedDeleteExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.CVUserMapper;
 import com.project.codinviec_core_service.repository.CVUserRepository;
 import com.project.codinviec_core_service.repository.auth.UserRepository;
@@ -58,8 +58,7 @@ public class CVUserServiceImp implements CVUserService {
             default -> Sort.by(Sort.Direction.ASC, "id");
         };
 
-        Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize(),
-                sort);
+        Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize(), sort);
 
         return cvUserRepository.findAll(spec, pageable)
                 .map(cvUserMapper::toCVUserDTO);
@@ -68,7 +67,7 @@ public class CVUserServiceImp implements CVUserService {
     @Override
     public CVUserDTO getById(Integer id) {
         CVUser cvUser = cvUserRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id CV User "));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id CV User"));
         return cvUserMapper.toCVUserDTO(cvUser);
     }
 
@@ -76,19 +75,16 @@ public class CVUserServiceImp implements CVUserService {
     @Transactional
     public CVUserDTO create(CVUserRequest req) {
         User candidate = userRepository.findById(req.getCandidateId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id User"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id User"));
 
         Integer maxVerison = cvUserRepository.findFirstByCandidate_IdOrderByVersionDesc(req.getCandidateId())
                 .map(cv -> cv.getVersion() + 1)
-                .orElse(1); // nguoc lai neu chua cv nao thi set no la 1
+                .orElse(1);
 
-        // Xử lý upload hình ảnh CV
-        // fileUrl trong CVUserRequest giờ là MultipartFile
         if (req.getFileUrl() == null || req.getFileUrl().isEmpty()) {
-            throw new NotFoundIdExceptionHandler("Vui lòng cung cấp file hình ảnh CV!");
+            throw new AppException(ResourceErrorCode.NOT_FOUND, "Vui lòng cung cấp file hình ảnh CV!");
         }
 
-        // Lưu file và lấy tên file
         String savedFileName = fileService.saveFiles(req.getFileUrl());
 
         CVUser cvUser = cvUserMapper.toCreateCVUser(req, candidate, savedFileName);
@@ -101,17 +97,14 @@ public class CVUserServiceImp implements CVUserService {
     @Transactional
     public CVUserDTO update(Integer id, CVUserRequest req) {
         CVUser cvUser = cvUserRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id CV User "));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id CV User"));
 
         if (!cvUser.getCandidate().getId().equals(req.getCandidateId())) {
-            throw new NotFoundIdExceptionHandler("CV không thuộc user này!");
+            throw new AppException(ResourceErrorCode.NOT_FOUND, "CV không thuộc user này!");
         }
 
-        // Xử lý upload hình ảnh CV
-        // fileUrl trong CVUserRequest giờ là MultipartFile
-        String fileUrl = cvUser.getFileUrl(); // Giữ nguyên fileUrl cũ mặc định
+        String fileUrl = cvUser.getFileUrl();
         if (req.getFileUrl() != null && !req.getFileUrl().isEmpty()) {
-            // Nếu có upload file hình ảnh mới, lưu file và cập nhật fileUrl
             fileUrl = fileService.saveFiles(req.getFileUrl());
         }
 
@@ -124,11 +117,10 @@ public class CVUserServiceImp implements CVUserService {
     @Transactional
     public CVUserDTO deleteById(Integer id, String candidateId) {
         CVUser cvUser = cvUserRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id CV User "));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id CV User"));
 
-        // sau này có jwt thì dựa vào token để xoá test logic la 9
         if (!cvUser.getCandidate().getId().equals(candidateId)) {
-            throw new UnauthorizedDeleteExceptionHandler("Bạn không có quyền xóa CV này!");
+            throw new AppException(ResourceErrorCode.UNAUTHORIZED_ACTION, "Bạn không có quyền xóa CV này!");
         }
 
         cvUserRepository.delete(cvUser);

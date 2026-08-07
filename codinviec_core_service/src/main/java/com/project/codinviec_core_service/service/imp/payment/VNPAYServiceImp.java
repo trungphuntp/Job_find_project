@@ -1,4 +1,6 @@
 package com.project.codinviec_core_service.service.imp.payment;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.config.VNPAYConfig;
 import com.project.codinviec_core_service.dto.vnpay.VNPAYCallBackResponseDTO;
@@ -8,7 +10,6 @@ import com.project.codinviec_core_service.entity.payment.Payment;
 import com.project.codinviec_core_service.entity.payment.PaymentMethod;
 import com.project.codinviec_core_service.entity.payment.PaymentStatus;
 import com.project.codinviec_core_service.entity.payment.ServiceProduct;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.repository.auth.UserRepository;
 import com.project.codinviec_core_service.repository.payment.PaymentMethodRepository;
 import com.project.codinviec_core_service.repository.payment.PaymentRepository;
@@ -46,19 +47,19 @@ public class VNPAYServiceImp implements VNPAYService {
     public VNPAYPaymentResponseDTO createPaymentUrl(PaymentRequest paymentRequest, HttpServletRequest httpRequest) {
         // Bước 1: Validate ServiceProduct
         ServiceProduct serviceProduct = serviceProductRepository.findById(paymentRequest.getServiceProductId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Service Product"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Service Product"));
 
         // Bước 2: Validate User
         User user = userRepository.findById(paymentRequest.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy User"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy User"));
 
         // Bước 3: Tìm PaymentMethod VNPAY (id = 9 theo database)
         PaymentMethod vnpayMethod = paymentMethodRepository.findByNameIgnoreCase("VNPAY")
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Payment Method VNPAY"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Payment Method VNPAY"));
 
         // Bước 4: Tìm PaymentStatus PENDING (id = 1 theo database)
         PaymentStatus pendingStatus = paymentStatusRepository.findByNameIgnoreCase("Pending")
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Payment Status PENDING"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Payment Status PENDING"));
 
         // Bước 5: Tạo mã giao dịch ngẫu nhiên (8 chữ số)
         String randomNumber = vnPayHelper.getRandomNumber(8);

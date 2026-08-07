@@ -2,7 +2,8 @@ package com.project.codinviec_gateway_service.util;
 
 
 import com.project.codinviec_gateway_service.dto.JwtUserDTO;
-import com.project.codinviec_gateway_service.exception.security.AccessTokenExceptionHandler;
+import com.project.codinviec_gateway_service.enums.GatewayErrorCode;
+import com.project.codinviec_gateway_service.exception.AppException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -56,7 +57,6 @@ public class JWTHelper {
 
 
     public void remoteAllTokens(String userId, String deviceId, String keyRefreshTokenRedis, ServerHttpResponse response) {
-//        xóa redis của refresh token
         redisTemplateDb.delete(keyRefreshTokenRedis+userId+":"+deviceId);
         cookieHelper.clearRefreshTokenCookie(response);
         cookieHelper.clearAccessTokenCookie(response);
@@ -76,20 +76,16 @@ public class JWTHelper {
             userId = claims.getIssuer();
             String role = claims.getSubject();
 
-//          Kiểm tra type
             String type = claims.get("type", String.class);
             if (!"access".equals(type)) {
                 throw new JwtException("Type is not valid!");
             }
 
-
-//          Kiểm tra device trong token có khớp không
-             deviceId = claims.get("device", String.class);
+            deviceId = claims.get("device", String.class);
             if (!checkDevicesIDToken(userId, deviceId)) {
                 throw new JwtException("Devices is not valid");
             }
 
-//          Kiểm tra versionToken
             Integer tokenVersionInToken = claims.get("tokenVersion", Integer.class);
             Integer tokenVersionInDb = getTokenVersion(userId, keyVersionRedis);
             if (!Objects.equals(tokenVersionInToken, tokenVersionInDb)) {
@@ -102,13 +98,12 @@ public class JWTHelper {
                     .tokenVersion(tokenVersionInDb)
                     .deviceId(deviceId)
                     .build();
-        }catch (ExpiredJwtException e){
-            remoteAllTokens(userId,deviceId, keyVersionRedis,response);
-            throw new AccessTokenExceptionHandler("Token đã hết hạn!!");
-        }
-        catch (JwtException e) {
-            remoteAllTokens(userId,deviceId, keyVersionRedis,response);
-            throw new AccessTokenExceptionHandler("Token truyền vào không được hỗ trợ");
+        } catch (ExpiredJwtException e) {
+            remoteAllTokens(userId, deviceId, keyVersionRedis, response);
+            throw new AppException(GatewayErrorCode.TOKEN_EXPIRED);
+        } catch (JwtException e) {
+            remoteAllTokens(userId, deviceId, keyVersionRedis, response);
+            throw new AppException(GatewayErrorCode.TOKEN_INVALID);
         }
     }
 

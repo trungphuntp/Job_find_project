@@ -1,13 +1,13 @@
 package com.project.codinviec_notification_service.service.Imp;
 
-import com.project.codinviec_notification_service.exception.event.SendEmailRegisterFail;
+import com.project.codinviec_notification_service.enums.NotificationErrorCode;
+import com.project.codinviec_notification_service.exception.AppException;
 import com.project.codinviec_notification_service.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +25,11 @@ public class EmailServiceImp implements EmailService {
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(html, true); // true = HTML
+            helper.setText(html, true);
 
             mailSender.send(message);
         } catch (Exception e) {
-            throw new SendEmailRegisterFail();
+            throw new AppException(NotificationErrorCode.SEND_REGISTER_EMAIL_FAIL);
         }
     }
 }

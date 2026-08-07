@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.JobLevelDTO;
 import com.project.codinviec_core_service.entity.JobLevel;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.JobLevelMapper;
 import com.project.codinviec_core_service.repository.JobLevelRepository;
 import com.project.codinviec_core_service.request.JobLevelRequest;
@@ -62,7 +63,7 @@ public class JobLevelServiceImp implements JobLevelService {
     @Override
     public JobLevelDTO getById(int id) {
         JobLevel jobLevel = jobLevelRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Joblevel với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Joblevel với ID: " + id));
         return jobLevelMapper.toDTO(jobLevel);
     }
 
@@ -77,7 +78,7 @@ public class JobLevelServiceImp implements JobLevelService {
     @Transactional
     public JobLevelDTO update(int id, JobLevelRequest request){
         jobLevelRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Joblevel ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Joblevel ID: " + id));
         JobLevel entity = jobLevelMapper.updateJobLevel(id, request);
         return jobLevelMapper.toDTO(jobLevelRepository.save(entity));
     }
@@ -86,7 +87,7 @@ public class JobLevelServiceImp implements JobLevelService {
     @Transactional
     public void delete(int id) {
         JobLevel jobLevel = jobLevelRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Joblevel ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Joblevel ID: " + id));
         jobLevelRepository.delete(jobLevel);
     }
 }

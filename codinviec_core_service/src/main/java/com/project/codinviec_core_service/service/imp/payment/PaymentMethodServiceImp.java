@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp.payment;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.payment.PaymentMethodDTO;
 import com.project.codinviec_core_service.entity.payment.PaymentMethod;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.payment.PaymentMethodMapper;
 import com.project.codinviec_core_service.repository.payment.PaymentMethodRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -57,7 +58,7 @@ public class PaymentMethodServiceImp implements PaymentMethodService {
     @Override
     public PaymentMethodDTO getById(Integer id) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id"));
 
         return paymentMethodMapper.paymentMethodDTO(paymentMethod);
     }
@@ -74,7 +75,7 @@ public class PaymentMethodServiceImp implements PaymentMethodService {
     @Transactional
     public PaymentMethodDTO update(Integer id, PaymentMethodRequest req) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id"));
 
         paymentMethodMapper.updatePaymenMethodMapper(paymentMethod, req);
 
@@ -85,7 +86,7 @@ public class PaymentMethodServiceImp implements PaymentMethodService {
     @Transactional
     public PaymentMethodDTO deleteById(Integer id) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
-                        .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id"));
+                        .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id"));
         paymentMethodRepository.deleteById(id);
         return paymentMethodMapper.paymentMethodDTO(paymentMethod);
     }

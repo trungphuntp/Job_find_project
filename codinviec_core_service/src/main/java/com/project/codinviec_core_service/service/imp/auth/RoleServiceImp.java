@@ -1,8 +1,8 @@
 package com.project.codinviec_core_service.service.imp.auth;
 
 import com.project.codinviec_core_service.dto.auth.RoleDTO;
-import com.project.codinviec_core_service.exception.common.ConflictExceptionHandler;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.request.PageRequestCustom;
 import com.project.codinviec_core_service.entity.auth.Role;
 import com.project.codinviec_core_service.mapper.auth.RoleMapper;
@@ -42,10 +42,8 @@ public class RoleServiceImp implements RoleService {
     public Page<RoleDTO> getAllWithPage(PageRequestCustom req) {
 
         PageRequestCustom pageRequestValidate = pageCustomHelper.validatePageCustom(req);
-        //Search
         Specification<Role> spec = roleSpecification.searchByName(pageRequestValidate.getKeyword());
 
-        //Sort
         Sort sort = switch (pageRequestValidate.getSortBy()) {
             case "roleNameAsc" -> Sort.by(Sort.Direction.ASC, "roleName");
             case "roleNameDesc" -> Sort.by(Sort.Direction.DESC, "roleName");
@@ -57,7 +55,6 @@ public class RoleServiceImp implements RoleService {
             default -> Sort.by(Sort.Direction.ASC, "id");
         };
 
-        //Page
         Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize(), sort);
 
         return roleRepository.findAll(spec,pageable)
@@ -66,7 +63,8 @@ public class RoleServiceImp implements RoleService {
 
     @Override
     public RoleDTO getById(String id) {
-        Role role = roleRepository.findById(id).orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy role Id"));
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy role Id"));
         return roleMapper.toRoleDTO(role);
     }
 
@@ -74,7 +72,7 @@ public class RoleServiceImp implements RoleService {
     @Transactional
     public RoleDTO create(RoleRequest req) {
         roleRepository.findByRoleNameIgnoreCase(req.getRoleName())
-                .ifPresent(r -> { throw new ConflictExceptionHandler("Role đã tồn tại!"); });
+                .ifPresent(r -> { throw new AppException(ResourceErrorCode.CONFLICT, "Role đã tồn tại!"); });
 
         Role role = roleMapper.toCreateRole(req);
         return roleMapper.toRoleDTO(roleRepository.save(role));
@@ -82,8 +80,9 @@ public class RoleServiceImp implements RoleService {
 
     @Override
     @Transactional
-    public RoleDTO update(String id,RoleRequest req) {
-        Role existingRole = roleRepository.findById(id).orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy role Id"));
+    public RoleDTO update(String id, RoleRequest req) {
+        Role existingRole = roleRepository.findById(id)
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy role Id"));
         roleMapper.toUpdateRole(req, existingRole);
         return roleMapper.toRoleDTO(roleRepository.save(existingRole));
     }
@@ -92,7 +91,8 @@ public class RoleServiceImp implements RoleService {
     @Override
     @Transactional
     public RoleDTO deleteById(String id) {
-        Role role = roleRepository.findById(id).orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy role ID"));
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy role ID"));
         roleRepository.delete(role);
         return roleMapper.toRoleDTO(role);
     }

@@ -5,7 +5,8 @@ import com.project.codinviec_core_service.entity.Language;
 import com.project.codinviec_core_service.entity.LanguageSkill;
 import com.project.codinviec_core_service.entity.LevelLanguage;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.LanguageSkillMapper;
 import com.project.codinviec_core_service.repository.LanguageRepository;
 import com.project.codinviec_core_service.repository.LanguageSkillRepository;
@@ -61,7 +62,7 @@ public class LanguageSkillServiceImp implements LanguageSkillService {
     @Override
     public LanguageSkillDTO getLanguageSkillById(Integer id) {
         LanguageSkill ls = languageSkillRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language_skill"));
         return languageSkillMapper.toDto(ls);
     }
 
@@ -69,14 +70,14 @@ public class LanguageSkillServiceImp implements LanguageSkillService {
     @Transactional
     public LanguageSkillDTO createLanguageSkill(LanguageSkillRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         Language language = languageRepository.findById(request.getLanguageId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language"));
         LevelLanguage level = levelLanguageRepository.findById(request.getLevelLanguageId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id level_language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id level_language"));
 
         if (languageSkillRepository.existsByUser_IdAndLanguage_Id(user.getId(), language.getId())) {
-            throw new NotFoundIdExceptionHandler("User đã có skill với language này");
+            throw new AppException(ResourceErrorCode.CONFLICT, "User đã có skill với language này");
         }
 
         LanguageSkill newSkill = languageSkillMapper.saveLanguageSkill(user, language, level, request);
@@ -88,14 +89,14 @@ public class LanguageSkillServiceImp implements LanguageSkillService {
     @Transactional
     public LanguageSkillDTO updateLanguageSkill(int id, LanguageSkillRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         languageSkillRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language_skill"));
 
         Language language = languageRepository.findById(request.getLanguageId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language"));
         LevelLanguage level = levelLanguageRepository.findById(request.getLevelLanguageId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id level_language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id level_language"));
 
         LanguageSkill ls = languageSkillMapper.updateLanguageSkill(id, user, language, level, request);
         LanguageSkill updated = languageSkillRepository.save(ls);
@@ -106,7 +107,7 @@ public class LanguageSkillServiceImp implements LanguageSkillService {
     @Transactional
     public LanguageSkillDTO deleteLanguageSkill(int id) {
         LanguageSkill ls = languageSkillRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language_skill"));
         languageSkillRepository.delete(ls);
         return languageSkillMapper.toDto(ls);
     }

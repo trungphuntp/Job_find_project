@@ -1,9 +1,9 @@
 package com.project.codinviec_core_service.event.publish;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.codinviec_core_service.entity.auth.OutboxEventEntity;
+import com.project.codinviec_core_service.enums.CommonErrorCode;
 import com.project.codinviec_core_service.event.payload.CreateUserCorePayload;
-import com.project.codinviec_core_service.exception.auth.CreatedUserFail;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.service.OutboxServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,8 +28,8 @@ public class UserEventPublish {
                     .createdDate(LocalDateTime.now())
                     .build());
             outboxPublisher.markHasPendingEvents();
-        } catch (RuntimeException  e) {
-            throw new CreatedUserFail();
+        } catch (RuntimeException e) {
+            throw new AppException(CommonErrorCode.INTERNAL_SERVER_ERROR, "Tạo user thất bại");
         }
     }
 
@@ -43,8 +43,8 @@ public class UserEventPublish {
                     .createdDate(LocalDateTime.now())
                     .build());
             outboxPublisher.markHasPendingEvents();
-        } catch (RuntimeException  e) {
-            throw new CreatedUserFail();
+        } catch (RuntimeException e) {
+            throw new AppException(CommonErrorCode.INTERNAL_SERVER_ERROR, "Tạo user thất bại");
         }
     }
 }

@@ -1,9 +1,10 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.CertificateDTO;
 import com.project.codinviec_core_service.entity.Certificate;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.CertificateMapper;
 import com.project.codinviec_core_service.repository.CertificateRepository;
 import com.project.codinviec_core_service.repository.auth.UserRepository;
@@ -55,7 +56,7 @@ public class CertificateServiceImp implements CertificateService {
     @Override
     public CertificateDTO getCertificateById(Integer id) {
         Certificate cert = certificateRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id certificate"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id certificate"));
         return certificateMapper.toDto(cert);
     }
 
@@ -63,7 +64,7 @@ public class CertificateServiceImp implements CertificateService {
     @Transactional
     public CertificateDTO createCertificate(CertificateRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
 
         Certificate cert = certificateMapper.saveCertificate(user, request);
         certificateRepository.save(cert);
@@ -74,9 +75,9 @@ public class CertificateServiceImp implements CertificateService {
     @Transactional
     public CertificateDTO updateCertificate(int id, CertificateRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         certificateRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id certificate"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id certificate"));
 
         Certificate cert = certificateMapper.updateCertificate(id, user, request);
         Certificate updated = certificateRepository.save(cert);
@@ -87,7 +88,7 @@ public class CertificateServiceImp implements CertificateService {
     @Transactional
     public CertificateDTO deleteCertificate(int id) {
         Certificate cert = certificateRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id certificate"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id certificate"));
         certificateRepository.delete(cert);
         return certificateMapper.toDto(cert);
     }

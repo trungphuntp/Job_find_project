@@ -1,9 +1,9 @@
 package com.project.codinviec_core_service.event.consumer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.project.codinviec_core_service.enums.CommonErrorCode;
 import com.project.codinviec_core_service.event.payload.CreateUserCorePayload;
 import com.project.codinviec_core_service.event.publish.UserEventPublish;
-import com.project.codinviec_core_service.exception.auth.CreatedUserFail;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.service.auth.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -41,7 +41,7 @@ public class UserRegisteredConsumer {
             e.printStackTrace();
             userEventPublish.publishRegisterFail(payload);
             ack.acknowledge();
-            throw new CreatedUserFail();
+            throw new AppException(CommonErrorCode.INTERNAL_SERVER_ERROR, "Tạo user thất bại");
         }
     }
 }

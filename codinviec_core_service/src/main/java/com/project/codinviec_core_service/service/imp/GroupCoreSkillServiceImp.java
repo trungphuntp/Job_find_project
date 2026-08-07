@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.GroupCoreSkillDTO;
 import com.project.codinviec_core_service.entity.GroupCoreSkill;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.GroupCoreSkillMapper;
 import com.project.codinviec_core_service.repository.GroupCoreSkillRepository;
 import com.project.codinviec_core_service.request.GroupCoreSkillRequest;
@@ -44,7 +45,7 @@ public class GroupCoreSkillServiceImp implements GroupCoreSkillService {
     @Override
     public GroupCoreSkillDTO getGroupCoreSkillById(Integer id) {
         GroupCoreSkill entity = repository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id group_core_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id group_core_skill"));
         return mapper.toDto(entity);
     }
 
@@ -60,7 +61,7 @@ public class GroupCoreSkillServiceImp implements GroupCoreSkillService {
     @Transactional
     public GroupCoreSkillDTO updateGroupCoreSkill(int id, GroupCoreSkillRequest request) {
         repository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id group_core_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id group_core_skill"));
 
         GroupCoreSkill entity = mapper.updateGroupCoreSkill(id, request);
         GroupCoreSkill updated = repository.save(entity);
@@ -71,7 +72,7 @@ public class GroupCoreSkillServiceImp implements GroupCoreSkillService {
     @Transactional
     public GroupCoreSkillDTO deleteGroupCoreSkill(int id) {
         GroupCoreSkill entity = repository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id group_core_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id group_core_skill"));
         repository.delete(entity);
         return mapper.toDto(entity);
     }

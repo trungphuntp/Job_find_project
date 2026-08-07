@@ -1,10 +1,11 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.CompanyAddressDTO;
 import com.project.codinviec_core_service.entity.CompanyAddress;
 import com.project.codinviec_core_service.entity.Province;
 import com.project.codinviec_core_service.entity.Ward;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.CompanyAddressMapper;
 import com.project.codinviec_core_service.repository.CompanyAddressRepository;
 import com.project.codinviec_core_service.repository.ProvinceRepository;
@@ -61,7 +62,7 @@ public class CompanyAddressImp implements CompanyAddressService {
     @Override
     public CompanyAddressDTO getCompanyAddressById(Integer id) {
         CompanyAddress companyAddress = companyAddressRepository.findById(id).orElseThrow(
-                ()->  new NotFoundIdExceptionHandler("Không tìm thấy company address")
+                ()->  new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy company address")
         );
         return companyAddressMapper.toCompanyAddressDTO(companyAddress);
     }
@@ -69,11 +70,11 @@ public class CompanyAddressImp implements CompanyAddressService {
     @Override
     public CompanyAddressDTO saveCompanyAddress(CompanyAddressRequest companyAddressRequest) {
         Province province = provinceRepository.findById(companyAddressRequest.getProvinceId()).orElseThrow(
-                ()-> new NotFoundIdExceptionHandler("Không tìm thấy Province")
+                ()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Province")
         );
 
         Ward ward = wardRepository.findById(companyAddressRequest.getWardId()).orElseThrow(
-                ()-> new NotFoundIdExceptionHandler("Không tìm thấy Ward")
+                ()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Ward")
         );
         return companyAddressMapper.toCompanyAddressDTO(
                 companyAddressRepository.save(
@@ -84,11 +85,11 @@ public class CompanyAddressImp implements CompanyAddressService {
     @Override
     public CompanyAddressDTO updateCompanyAddress(Integer id, CompanyAddressRequest companyAddressRequest) {
         Province province = provinceRepository.findById(companyAddressRequest.getProvinceId()).orElseThrow(
-                ()-> new NotFoundIdExceptionHandler("Không tìm thấy Province")
+                ()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Province")
         );
 
         Ward ward = wardRepository.findById(companyAddressRequest.getWardId()).orElseThrow(
-                ()-> new NotFoundIdExceptionHandler("Không tìm thấy Ward")
+                ()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Ward")
         );
         return companyAddressMapper.toCompanyAddressDTO(
                 companyAddressRepository.save(
@@ -99,7 +100,7 @@ public class CompanyAddressImp implements CompanyAddressService {
     @Override
     public CompanyAddressDTO deleteCompanyAddress(Integer id) {
         CompanyAddress companyAddress = companyAddressRepository.findById(id).orElseThrow(
-                ()->  new NotFoundIdExceptionHandler("Không tìm thấy company address")
+                ()->  new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy company address")
         );
         companyAddressRepository.delete(companyAddress);
         return companyAddressMapper.toCompanyAddressDTO(companyAddress);

@@ -1,8 +1,8 @@
 package com.project.codinviec_auth_service.util;
 
 import com.project.codinviec_auth_service.dto.JwtUserDTO;
-import com.project.codinviec_auth_service.exception.security.AccessTokenExceptionHandler;
-import com.project.codinviec_auth_service.exception.security.RefreshTokenExceptionHandler;
+import com.project.codinviec_auth_service.enums.AuthenticationErrorCode;
+import com.project.codinviec_auth_service.exception.AppException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -18,11 +18,10 @@ import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class JWTHepler  {
+public class JWTHepler {
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -40,11 +39,6 @@ public class JWTHepler  {
 
     private SecretKey keyParse;
 
-
-    /***
-     * Key redis note
-     */
-    //    user_devices:{userId} = [các giá trị devices]
     private final String keyDevicesId = "user_devices:";
 
     @PostConstruct
@@ -53,20 +47,16 @@ public class JWTHepler  {
     }
 
     public void revokeAllTokens(String userId, String deviceId, String keyRefreshTokenRedis, HttpServletResponse response) {
-//        xóa redis của refresh token
-        redisTemplateDb.delete(keyRefreshTokenRedis+userId+":"+deviceId);
+        redisTemplateDb.delete(keyRefreshTokenRedis + userId + ":" + deviceId);
         cookieHelper.clearRefreshTokenCookie(response);
         cookieHelper.clearAccessTokenCookie(response);
-
     }
 
-
-    public String createAccessToken(String roles,int tokenVersion, String userId,String devicesId) {
-        try{
+    public String createAccessToken(String roles, int tokenVersion, String userId, String devicesId) {
+        try {
             long now = System.currentTimeMillis();
-            long exp = now + expirationAccess;
-            Date expirationDate = new Date(exp);
-            String accessTokenReuslt = Jwts.builder()
+            Date expirationDate = new Date(now + expirationAccess);
+            return Jwts.builder()
                     .setSubject(roles)
                     .setIssuer(userId)
                     .setIssuedAt(new Date())
@@ -76,14 +66,13 @@ public class JWTHepler  {
                     .claim("device", devicesId)
                     .signWith(keyParse)
                     .compact();
-            return accessTokenReuslt;
-        }catch (Exception e) {
-            throw new AccessTokenExceptionHandler("Không thể tạo AccessToken!");
+        } catch (Exception e) {
+            throw new AppException(AuthenticationErrorCode.TOKEN_CREATE_FAIL);
         }
     }
 
     public String createRefreshToken(String roles, String userId, String keyRefreshTokenRedis, int tokenVersion, String devicesId) {
-        try{
+        try {
             long now = System.currentTimeMillis();
             long exp = now + expirationRefresh;
             Date expirationDate = new Date(exp);
@@ -99,53 +88,46 @@ public class JWTHepler  {
                     .signWith(keyParse)
                     .compact();
 
-            System.out.println("key : " +  keyRefreshTokenRedis+userId + ":" + devicesId);
-            System.out.println("refreshToken : " +  refreshToken);
-            System.out.println("expirationRefresh : " +  expirationRefresh);
-//            đẩy lên redis
-            redisTemplateDb.opsForValue().set(keyRefreshTokenRedis+userId + ":" + devicesId, refreshToken,Duration.ofMillis(exp - now));
-            return  refreshToken;
-        }catch (Exception e) {
-            throw new RefreshTokenExceptionHandler("Không thể tạo RefreshToken");
+            redisTemplateDb.opsForValue().set(
+                    keyRefreshTokenRedis + userId + ":" + devicesId,
+                    refreshToken,
+                    Duration.ofMillis(exp - now));
+            return refreshToken;
+        } catch (Exception e) {
+            throw new AppException(AuthenticationErrorCode.REFRESH_TOKEN_CREATE_FAIL);
         }
     }
 
-    public JwtUserDTO verifyRefreshToken(String refreshToken,String keyRefreshTokenRedis,String keyVersionRedis, HttpServletResponse response) {
-        try{
+    public JwtUserDTO verifyRefreshToken(String refreshToken, String keyRefreshTokenRedis, String keyVersionRedis, HttpServletResponse response) {
+        try {
             Jws<Claims> tokenValidate = Jwts.parser()
                     .verifyWith(keyParse)
                     .build()
                     .parseSignedClaims(refreshToken);
 
             Claims claims = tokenValidate.getBody();
-
             String userId = claims.getIssuer();
             String role = claims.getSubject();
 
-//          Kiểm tra type
             String type = claims.get("type", String.class);
             if (!"refresh".equals(type)) {
                 throw new JwtException("Type is not valid!");
             }
 
-
-//          Kiểm tra device trong token có khớp không
             String deviceId = claims.get("device", String.class);
             if (!checkDevicesIDToken(userId, deviceId)) {
                 throw new JwtException("Devices is not valid");
             }
 
-//          Kiểm tra versionToken
             Integer tokenVersionInToken = claims.get("tokenVersion", Integer.class);
             Integer tokenVersionInDb = getTokenVersion(userId, keyVersionRedis);
             if (!tokenVersionInToken.equals(tokenVersionInDb)) {
                 throw new JwtException("Token revoked");
             }
 
-//            Kiểm tra refreshh token có trên redis không
-            String refreshTokenRedis = getRefreshToken(userId,keyRefreshTokenRedis,deviceId);
-            if(refreshTokenRedis == null){
-                throw new RefreshTokenExceptionHandler("Token hết hạn!");
+            String refreshTokenRedis = getRefreshToken(userId, keyRefreshTokenRedis, deviceId);
+            if (refreshTokenRedis == null) {
+                throw new AppException(AuthenticationErrorCode.REFRESH_TOKEN_EXPIRED);
             }
 
             return JwtUserDTO.builder()
@@ -154,47 +136,43 @@ public class JWTHepler  {
                     .tokenVersion(tokenVersionInToken)
                     .deviceId(deviceId)
                     .build();
-        }
-        catch (ExpiredJwtException e){
+        } catch (AppException e) {
+            throw e;
+        } catch (ExpiredJwtException e) {
             String userId = e.getClaims().get("userId").toString();
             String deviceId = e.getClaims().get("deviceId").toString();
-            revokeAllTokens(userId,deviceId, keyRefreshTokenRedis,response);
-            throw new RefreshTokenExceptionHandler("Token đã hết hạn");
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    public String getRefreshToken(String userId, String keyRefreshTokenRedis,String devicesId) {
-        try{
-            if(redisTemplateDb.hasKey(keyRefreshTokenRedis+userId+":"+devicesId )){
-                return redisTemplateDb.opsForValue().get(keyRefreshTokenRedis+userId+":"+devicesId );
-            }
-            return null;
-        }catch (Exception e){
-            return null;
+            revokeAllTokens(userId, deviceId, keyRefreshTokenRedis, response);
+            throw new AppException(AuthenticationErrorCode.REFRESH_TOKEN_EXPIRED);
+        } catch (Exception e) {
+            throw new AppException(AuthenticationErrorCode.REFRESH_TOKEN_INVALID);
         }
     }
 
-    public Integer getTokenVersion(String userId,String keyVersionRedis) {
-        try{
-            if(redisTemplateDb.hasKey(keyVersionRedis+userId)){
-                return Integer.parseInt(Objects.requireNonNull(redisTemplateDb.opsForValue().get(keyVersionRedis+userId)));
+    public String getRefreshToken(String userId, String keyRefreshTokenRedis, String devicesId) {
+        try {
+            if (redisTemplateDb.hasKey(keyRefreshTokenRedis + userId + ":" + devicesId)) {
+                return redisTemplateDb.opsForValue().get(keyRefreshTokenRedis + userId + ":" + devicesId);
             }
             return null;
-        }catch (Exception e){
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public Integer getTokenVersion(String userId, String keyVersionRedis) {
+        try {
+            if (redisTemplateDb.hasKey(keyVersionRedis + userId)) {
+                return Integer.parseInt(Objects.requireNonNull(redisTemplateDb.opsForValue().get(keyVersionRedis + userId)));
+            }
+            return null;
+        } catch (Exception e) {
             return null;
         }
     }
 
     public boolean checkDevicesIDToken(String userId, String devicesId) {
         try {
-            Double score = redisTemplateDb
-                    .opsForZSet()
-                    .score(keyDevicesId + userId, devicesId);
-
+            Double score = redisTemplateDb.opsForZSet().score(keyDevicesId + userId, devicesId);
             return score != null;
         } catch (Exception e) {
             return false;

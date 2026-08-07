@@ -1,4 +1,6 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.AvailableSkillExperienceDTO;
 import com.project.codinviec_core_service.entity.AvailableSkill;
@@ -6,7 +8,6 @@ import com.project.codinviec_core_service.entity.AvailableSkillExperience;
 import com.project.codinviec_core_service.entity.Experience;
 import com.project.codinviec_core_service.entity.GroupCoreSkill;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.AvailableSkillExperienceMapper;
 import com.project.codinviec_core_service.repository.AvailableSkillExperienceRepository;
 import com.project.codinviec_core_service.repository.AvailableSkillRepository;
@@ -66,7 +67,7 @@ public class AvailableSkillExperienceServiceImp implements AvailableSkillExperie
     @Override
     public AvailableSkillExperienceDTO getAvailableSkillExperienceById(Integer id) {
         AvailableSkillExperience ase = availableSkillExperienceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill_experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill_experience"));
         return mapper.toDto(ase);
     }
 
@@ -74,24 +75,24 @@ public class AvailableSkillExperienceServiceImp implements AvailableSkillExperie
     @Transactional
     public AvailableSkillExperienceDTO createAvailableSkillExperience(AvailableSkillExperienceRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
 
         GroupCoreSkill groupCoreSkill = null;
         if (request.getGroupCoreId() != null) {
             groupCoreSkill = groupCoreSkillRepository.findById(request.getGroupCoreId())
-                    .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id group_core_skill"));
+                    .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id group_core_skill"));
         }
 
         AvailableSkill availableSkill = availableSkillRepository.findById(request.getAvailableSkillId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill"));
 
         Experience experience = experienceRepository.findById(request.getExperienceId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id experience"));
 
 //        // chặn trùng
 //        if (availableSkillExperienceRepository.existsByUser_IdAndAvailableSkill_IdAndExperience_Id(
 //                user.getId(), availableSkill.getId(), experience.getId())) {
-//            throw new NotFoundIdExceptionHandler("User đã tồn tại available_skill + experience này");
+//            throw new AppException(ResourceErrorCode.NOT_FOUND, "User đã tồn tại available_skill + experience này");
 //        }
 
         AvailableSkillExperience ase = mapper.saveAvailableSkillExperience(user, groupCoreSkill, availableSkill, experience, request);
@@ -104,23 +105,23 @@ public class AvailableSkillExperienceServiceImp implements AvailableSkillExperie
     @Transactional
     public AvailableSkillExperienceDTO updateAvailableSkillExperience(int id, AvailableSkillExperienceRequest request) {
         AvailableSkillExperience ase = availableSkillExperienceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill_experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill_experience"));
 
         if (request.getGroupCoreId() != null) {
             GroupCoreSkill groupCoreSkill = groupCoreSkillRepository.findById(request.getGroupCoreId())
-                    .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id group_core_skill"));
+                    .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id group_core_skill"));
             ase.setGroupCoreSkill(groupCoreSkill);
         }
 
         if (request.getAvailableSkillId() != null) {
             AvailableSkill availableSkill = availableSkillRepository.findById(request.getAvailableSkillId())
-                    .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill"));
+                    .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill"));
             ase.setAvailableSkill(availableSkill);
         }
 
         if (request.getExperienceId() != null) {
             Experience experience = experienceRepository.findById(request.getExperienceId())
-                    .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id experience"));
+                    .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id experience"));
             ase.setExperience(experience);
         }
 
@@ -132,7 +133,7 @@ public class AvailableSkillExperienceServiceImp implements AvailableSkillExperie
     @Transactional
     public AvailableSkillExperienceDTO deleteAvailableSkillExperience(int id) {
         AvailableSkillExperience ase = availableSkillExperienceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill_experience"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill_experience"));
         availableSkillExperienceRepository.delete(ase);
         return mapper.toDto(ase);
     }
@@ -141,10 +142,10 @@ public class AvailableSkillExperienceServiceImp implements AvailableSkillExperie
     @Transactional
     public List<AvailableSkillExperienceDTO> deleteAvailableSkillExperienceByGroupCoreId(DeleteAvailableSkillExperienceByGroupCoreIdRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
 
         GroupCoreSkill groupCoreSkill = groupCoreSkillRepository.findById(request.getGroupCoreId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id group_core_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id group_core_skill"));
 
         List<AvailableSkillExperience> skillsUser = availableSkillExperienceRepository.findByUser_Id(user.getId());
 

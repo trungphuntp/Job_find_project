@@ -1,6 +1,7 @@
 package com.project.codinviec_core_service.util.helper;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
-import com.project.codinviec_core_service.exception.common.ParamExceptionHandler;
 import com.project.codinviec_core_service.request.PageRequestCompany;
 import com.project.codinviec_core_service.request.PageRequestCustom;
 import com.project.codinviec_core_service.request.PageRequestUser;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class PageCustomHelper {
     private final IntegerHelper integerHelper;
 
-    public PageRequestCustom validatePageCustom(PageRequestCustom pageRequestCustom) throws ParamExceptionHandler {
+    public PageRequestCustom validatePageCustom(PageRequestCustom pageRequestCustom) {
         // Check xem pageSize và pageNumber có phải int không
         int pageSize = integerHelper.parseIntOrThrow(pageRequestCustom.getPageSize(), "pageSize");
         int pageNumber = integerHelper.parseIntOrThrow(pageRequestCustom.getPageNumber(), "pageNumber");
@@ -41,12 +42,12 @@ public class PageCustomHelper {
 
         // truyền pageSize không hợp lệ ( > 0 mới tính)
         if (pageSize < 0)
-            throw new ParamExceptionHandler("Truyền pageSize không hợp lệ!");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "Truyền pageSize không hợp lệ!");
 
         return pageRequestCustom;
     }
 
-    public PageRequestCompany validatePageCompany(PageRequestCompany pageRequestCompany) throws ParamExceptionHandler {
+    public PageRequestCompany validatePageCompany(PageRequestCompany pageRequestCompany) {
         // Check xem pageSize và pageNumber có phải int không
         int pageSize = integerHelper.parseIntOrThrow(pageRequestCompany.getPageSize(), "pageSize");
         int pageNumber = integerHelper.parseIntOrThrow(pageRequestCompany.getPageNumber(), "pageNumber");
@@ -87,16 +88,16 @@ public class PageCustomHelper {
 
         // truyền pageSize không hợp lệ ( > 0 mới tính)
         if (pageSize < 0)
-            throw new ParamExceptionHandler("Truyền pageSize không hợp lệ!");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "Truyền pageSize không hợp lệ!");
         if (minEmployees < 0)
-            throw new ParamExceptionHandler("Truyền minEmployees không hợp lệ!");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "Truyền minEmployees không hợp lệ!");
 
         if (maxEmployees < 0)
-            throw new ParamExceptionHandler("Truyền maxEmployees không hợp lệ!");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "Truyền maxEmployees không hợp lệ!");
         return pageRequestCompany;
     }
 
-    public PageRequestUser validatePageUser(PageRequestUser pageRequestUser) throws ParamExceptionHandler {
+    public PageRequestUser validatePageUser(PageRequestUser pageRequestUser) {
         // Check xem pageSize và pageNumber có phải int không
 
         int pageSize = integerHelper.parseIntOrThrow(pageRequestUser.getPageSize(), "pageSize");
@@ -127,7 +128,7 @@ public class PageCustomHelper {
 
         // truyền pageSize không hợp lệ ( > 0 mới tính)
         if (pageSize < 0)
-            throw new ParamExceptionHandler("Truyền pageSize không hợp lệ!");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "Truyền pageSize không hợp lệ!");
 
         return pageRequestUser;
     }

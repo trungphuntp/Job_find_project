@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.ProvinceDTO;
 import com.project.codinviec_core_service.entity.Province;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.ProvinceMapper;
 import com.project.codinviec_core_service.repository.ProvinceRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -74,7 +75,7 @@ public class ProvinceServiceImp implements ProvinceService {
     @Override
     public ProvinceDTO getById(int id) {
         Province province = provinceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Province ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Province ID: " + id));
         return provinceMapper.toDTO(province);
     }
 
@@ -89,7 +90,7 @@ public class ProvinceServiceImp implements ProvinceService {
     @Transactional
     public ProvinceDTO update(int id, ProvinceRequest request) {
         provinceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Province ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Province ID: " + id));
         Province entity = provinceMapper.updateProvince(id, request);
         return provinceMapper.toDTO(provinceRepository.save(entity));
     }
@@ -98,7 +99,7 @@ public class ProvinceServiceImp implements ProvinceService {
     @Transactional
     public void delete(int id) {
         Province province = provinceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Province ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Province ID: " + id));
         provinceRepository.delete(province);
     }
 }

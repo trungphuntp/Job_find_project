@@ -2,8 +2,8 @@ package com.project.codinviec_core_service.service.imp;
 
 import com.project.codinviec_core_service.dto.CompanySizeDTO;
 import com.project.codinviec_core_service.entity.CompanySize;
-import com.project.codinviec_core_service.exception.common.ConflictExceptionHandler;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.CompanySizeMapper;
 import com.project.codinviec_core_service.repository.CompanySizeRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -36,13 +36,10 @@ public class CompanySizeServiceImp implements CompanySizeService {
 
     @Override
     public Page<CompanySizeDTO> getAllCompanyPage(PageRequestCustom pageRequestCustom) {
-        //        validate pageCustom
         PageRequestCustom pageRequestValidate = pageCustomHelper.validatePageCustom(pageRequestCustom);
 
-//        Tạo page cho api
-        Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1,pageRequestValidate.getPageSize());
+        Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize());
 
-//        Tạo search
         Specification<CompanySize> spec = Specification.allOf(
                 companySizeSpecification.searchByName(pageRequestCustom.getKeyword()));
 
@@ -53,8 +50,8 @@ public class CompanySizeServiceImp implements CompanySizeService {
     @Override
     public CompanySizeDTO getCompanyById(Integer id) {
         CompanySize companySize = companySizeRepository.findById(id)
-                .orElseThrow( ()-> new NotFoundIdExceptionHandler("Không tìm thấy id company size"));
-        return  companySizeMapper.companySizeToCompanySizeDTO(companySize);
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company size"));
+        return companySizeMapper.companySizeToCompanySizeDTO(companySize);
     }
 
     @Override
@@ -63,22 +60,23 @@ public class CompanySizeServiceImp implements CompanySizeService {
         try {
             CompanySize companySize = companySizeMapper.saveCompanySizeMapper(saveUpdateCompanySizeRequest);
             return companySizeMapper.companySizeToCompanySizeDTO(companySizeRepository.save(companySize));
-        } catch (Exception e){
-            throw new ConflictExceptionHandler("Lỗi thêm category size!");
+        } catch (Exception e) {
+            throw new AppException(ResourceErrorCode.CONFLICT, "Lỗi thêm company size!");
         }
-
     }
 
     @Override
     @Transactional
     public CompanySizeDTO updateCompanySize(Integer idCompanySize, SaveUpdateCompanySizeRequest saveUpdateCompanySizeRequest) {
+        companySizeRepository.findById(idCompanySize)
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company size!"));
         try {
-            companySizeRepository.findById(idCompanySize)
-                    .orElseThrow(()-> new NotFoundIdExceptionHandler("Không tìm thấy id company size!"));
-            CompanySize mappedCompanySize = companySizeMapper.updateCompanySizeMapper(idCompanySize,saveUpdateCompanySizeRequest);
+            CompanySize mappedCompanySize = companySizeMapper.updateCompanySizeMapper(idCompanySize, saveUpdateCompanySizeRequest);
             return companySizeMapper.companySizeToCompanySizeDTO(companySizeRepository.save(mappedCompanySize));
-        } catch (Exception e){
-            throw new ConflictExceptionHandler("Lỗi cập nhật category size!");
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AppException(ResourceErrorCode.CONFLICT, "Lỗi cập nhật company size!");
         }
     }
 
@@ -86,7 +84,7 @@ public class CompanySizeServiceImp implements CompanySizeService {
     @Transactional
     public CompanySizeDTO deleteCompanySize(Integer id) {
         CompanySize companySize = companySizeRepository.findById(id)
-                .orElseThrow( ()-> new NotFoundIdExceptionHandler("Không tìm thấy id company size"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company size"));
         companySizeRepository.delete(companySize);
         return companySizeMapper.companySizeToCompanySizeDTO(companySize);
     }
