@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.EmploymentTypeDTO;
 import com.project.codinviec_core_service.entity.EmploymentType;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.EmploymentTypeMapper;
 import com.project.codinviec_core_service.repository.EmploymentTypeRepository;
 import com.project.codinviec_core_service.request.EmploymentTypeRequest;
@@ -63,7 +64,7 @@ public class EmploymentTypeServiceImp implements EmploymentTypeService {
     @Override
     public EmploymentTypeDTO getById(int id) {
         EmploymentType employmentType = employmentTypeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy EmploymentType với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy EmploymentType với ID: " + id));
         return employmentTypeMapper.toDTO(employmentType);
     }
 
@@ -78,7 +79,7 @@ public class EmploymentTypeServiceImp implements EmploymentTypeService {
     @Transactional
     public EmploymentTypeDTO update(int id, EmploymentTypeRequest request) {
         employmentTypeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy EmploymentType ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy EmploymentType ID: " + id));
         EmploymentType entity = employmentTypeMapper.updateEmploymentType(id, request);
         return employmentTypeMapper.toDTO(employmentTypeRepository.save(entity));
     }
@@ -87,7 +88,7 @@ public class EmploymentTypeServiceImp implements EmploymentTypeService {
     @Transactional
     public void delete(int id) {
        EmploymentType employmentType = employmentTypeRepository.findById(id)
-               .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy EmploymentType ID: " + id));
+               .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy EmploymentType ID: " + id));
        employmentTypeRepository.delete(employmentType);
     }
 }

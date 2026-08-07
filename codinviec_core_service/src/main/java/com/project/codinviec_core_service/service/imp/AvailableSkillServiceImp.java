@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.AvailableSkillDTO;
 import com.project.codinviec_core_service.entity.AvailableSkill;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.AvailableSkillMapper;
 import com.project.codinviec_core_service.repository.AvailableSkillRepository;
 import com.project.codinviec_core_service.request.AvailableSkillRequest;
@@ -44,7 +45,7 @@ public class AvailableSkillServiceImp implements AvailableSkillService {
     @Override
     public AvailableSkillDTO getAvailableSkillById(Integer id) {
         AvailableSkill entity = availableSkillRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill"));
         return availableSkillMapper.toDto(entity);
     }
 
@@ -60,7 +61,7 @@ public class AvailableSkillServiceImp implements AvailableSkillService {
     @Transactional
     public AvailableSkillDTO updateAvailableSkill(int id, AvailableSkillRequest request) {
         availableSkillRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill"));
 
         AvailableSkill entity = availableSkillMapper.updateAvailableSkill(id, request);
         AvailableSkill updated = availableSkillRepository.save(entity);
@@ -71,7 +72,7 @@ public class AvailableSkillServiceImp implements AvailableSkillService {
     @Transactional
     public AvailableSkillDTO deleteAvailableSkill(int id) {
         AvailableSkill entity = availableSkillRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id available_skill"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id available_skill"));
         availableSkillRepository.delete(entity);
         return availableSkillMapper.toDto(entity);
     }

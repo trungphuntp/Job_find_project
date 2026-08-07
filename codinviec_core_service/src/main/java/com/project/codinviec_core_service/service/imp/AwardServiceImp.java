@@ -1,9 +1,10 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.AwardDTO;
 import com.project.codinviec_core_service.entity.Award;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.AwardMapper;
 import com.project.codinviec_core_service.repository.AwardRepository;
 import com.project.codinviec_core_service.repository.auth.UserRepository;
@@ -55,7 +56,7 @@ public class AwardServiceImp implements AwardService {
     @Override
     public AwardDTO getAwardById(Integer id) {
         Award award = awardRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id award"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id award"));
         return awardMapper.toDto(award);
     }
 
@@ -63,7 +64,7 @@ public class AwardServiceImp implements AwardService {
     @Transactional
     public AwardDTO createAward(AwardRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
 
         Award award = awardMapper.saveAward(user, request);
         awardRepository.save(award);
@@ -74,9 +75,9 @@ public class AwardServiceImp implements AwardService {
     @Transactional
     public AwardDTO updateAward(int id, AwardRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         awardRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id award"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id award"));
 
         Award award = awardMapper.updateAward(id, user, request);
         Award updated = awardRepository.save(award);
@@ -87,7 +88,7 @@ public class AwardServiceImp implements AwardService {
     @Transactional
     public AwardDTO deleteAward(int id) {
         Award award = awardRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id award"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id award"));
         awardRepository.delete(award);
         return awardMapper.toDto(award);
     }

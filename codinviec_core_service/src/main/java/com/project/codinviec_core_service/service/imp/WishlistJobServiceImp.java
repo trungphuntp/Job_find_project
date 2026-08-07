@@ -4,8 +4,8 @@ import com.project.codinviec_core_service.dto.WishlistJobDTO;
 import com.project.codinviec_core_service.entity.Job;
 import com.project.codinviec_core_service.entity.WishlistJob;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
-import com.project.codinviec_core_service.exception.common.ParamExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.WishlistJobMapper;
 import com.project.codinviec_core_service.repository.JobRepository;
 import com.project.codinviec_core_service.repository.WishlistJobRepository;
@@ -39,7 +39,7 @@ public class WishlistJobServiceImp implements WishlistJobService {
     @Override
     public Page<WishlistJobDTO> getAllWishlistJobsPage(PageRequestCustom pageRequestCustom) {
         if (pageRequestCustom.getPageSize() == 0) {
-            throw new ParamExceptionHandler("page size truyền lên không hợp lệ");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "page size truyền lên không hợp lệ");
         }
         Pageable pageable = PageRequest.of(pageRequestCustom.getPageNumber() - 1, pageRequestCustom.getPageSize());
         Page<WishlistJob> wishlistJobPage = wishlistJobRepository.findAll(pageable);
@@ -50,16 +50,16 @@ public class WishlistJobServiceImp implements WishlistJobService {
     @Override
     public List<WishlistJobDTO> getWishlistJobsByUserId(String userId) {
         userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy user id"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy user id"));
         return wishlistJobMapper.mappedToWishlistJobDTO(wishlistJobRepository.findByUser_Id(userId));
     }
 
     @Override
     public List<WishlistJobDTO> saveWishlistJobs(WishlistJobRequest wishlistJobRequest) {
-        User user =  userRepository.findById(wishlistJobRequest.getUserId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+        User user = userRepository.findById(wishlistJobRequest.getUserId())
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         Job job = jobRepository.findById(wishlistJobRequest.getJobId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id job"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id job"));
 
         WishlistJob wishlistJob = wishlistJobMapper.saveWishlistJob(user, job, wishlistJobRequest);
         wishlistJobRepository.save(wishlistJob);
@@ -69,10 +69,10 @@ public class WishlistJobServiceImp implements WishlistJobService {
     @Override
     @Transactional
     public List<WishlistJobDTO> deleteWishlistJobs(WishlistJobRequest wishlistJobRequest) {
-        User user =  userRepository.findById(wishlistJobRequest.getUserId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+        User user = userRepository.findById(wishlistJobRequest.getUserId())
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         Job job = jobRepository.findById(wishlistJobRequest.getJobId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id job"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id job"));
         WishlistJob wishlistJob = wishlistJobMapper.saveWishlistJob(user, job, wishlistJobRequest);
         wishlistJobRepository.delete(wishlistJob);
         return wishlistJobMapper.mappedToWishlistJobDTO(wishlistJobRepository.findByUser_Id(user.getId()));

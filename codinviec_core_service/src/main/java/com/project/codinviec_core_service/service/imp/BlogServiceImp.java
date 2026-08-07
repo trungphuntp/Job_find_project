@@ -3,8 +3,8 @@ package com.project.codinviec_core_service.service.imp;
 import com.project.codinviec_core_service.dto.BlogDTO;
 import com.project.codinviec_core_service.dto.BlogDetailDTO;
 import com.project.codinviec_core_service.entity.Blog;
-import com.project.codinviec_core_service.exception.common.ConflictExceptionHandler;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.BlogMapper;
 import com.project.codinviec_core_service.repository.BlogRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -41,7 +41,6 @@ public class BlogServiceImp implements BlogService {
 
     @Override
     public Page<BlogDTO> getAllBlogPage(PageRequestCustom pageRequestCustom) {
-        // Validate pageCustom
         PageRequestCustom pageRequestValidate = pageCustomHelper.validatePageCustom(pageRequestCustom);
 
         Sort sort = switch (pageRequestValidate.getSortBy()) {
@@ -50,9 +49,7 @@ public class BlogServiceImp implements BlogService {
             case "sortHighlight" -> Sort.by(Sort.Direction.DESC, "isHighLight");
             default -> Sort.by(Sort.Direction.DESC, "createdDate");
         };
-        // Tạo page cho api
-        Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize(),sort);
-        // Tạo search
+        Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize(), sort);
         Specification<Blog> spec = Specification
                 .allOf(blogSpecification.searchByName(pageRequestValidate.getKeyword()));
         return blogRepository.findAll(spec, pageable)
@@ -62,7 +59,7 @@ public class BlogServiceImp implements BlogService {
     @Override
     public BlogDTO getBlogById(Integer id) {
         Blog blog = blogRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy user ID"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy blog ID"));
         return blogMapper.blogToDTO(blog);
     }
 
@@ -73,7 +70,7 @@ public class BlogServiceImp implements BlogService {
             Blog blog = blogMapper.saveBlogMapper(saveUpdateBlogRequest);
             return blogMapper.blogToDTO(blogRepository.save(blog));
         } catch (Exception e) {
-            throw new ConflictExceptionHandler("Lỗi thêm blog!");
+            throw new AppException(ResourceErrorCode.CONFLICT, "Lỗi thêm blog!");
         }
     }
 
@@ -81,14 +78,16 @@ public class BlogServiceImp implements BlogService {
     @Transactional
     public BlogDTO updateBlogById(Integer idBlog, SaveUpdateBlogRequest saveUpdateBlogRequest) {
         Blog blog = blogRepository.findById(idBlog)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy user ID"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy blog ID"));
 
         try {
             Blog mappedBlog = blogMapper.updateBlogMapper(idBlog, saveUpdateBlogRequest);
             mappedBlog.setCreatedDate(blog.getCreatedDate());
             return blogMapper.blogToDTO(blogRepository.save(mappedBlog));
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ConflictExceptionHandler("Lỗi cập nhật blog!");
+            throw new AppException(ResourceErrorCode.CONFLICT, "Lỗi cập nhật blog!");
         }
     }
 
@@ -96,7 +95,7 @@ public class BlogServiceImp implements BlogService {
     @Transactional
     public BlogDTO deleteBlogById(Integer id) {
         Blog blog = blogRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy user ID"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy blog ID"));
         blogRepository.delete(blog);
         return blogMapper.blogToDTO(blog);
     }
@@ -104,7 +103,7 @@ public class BlogServiceImp implements BlogService {
     @Override
     public BlogDetailDTO getBlogDetailById(Integer id) {
         Blog blog = blogRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy user ID"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy blog ID"));
         return blogMapper.blogToBlogDetailDTO(blog);
     }
 }

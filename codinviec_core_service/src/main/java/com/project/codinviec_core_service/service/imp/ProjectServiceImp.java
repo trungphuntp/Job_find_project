@@ -1,9 +1,10 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.ProjectDTO;
 import com.project.codinviec_core_service.entity.Project;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.ProjectMapper;
 import com.project.codinviec_core_service.repository.ProjectRepository;
 import com.project.codinviec_core_service.repository.auth.UserRepository;
@@ -46,7 +47,7 @@ public class ProjectServiceImp implements ProjectService {
 
     @Override
     public ProjectDTO getProjectById(Integer id) {
-        Project project = projectRepository.findById(id).orElseThrow(()-> new NotFoundIdExceptionHandler("Không tìm thấy id project"));
+        Project project = projectRepository.findById(id).orElseThrow(()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id project"));
         return projectMapper.toDto(project);
     }
 
@@ -54,7 +55,7 @@ public class ProjectServiceImp implements ProjectService {
     @Transactional
     public ProjectDTO createProject(ProjectRequest projectRequest) {
         User user = userRepository.findById(projectRequest.getUserId())
-                .orElseThrow(()-> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         Project project = projectMapper.saveProject(user, projectRequest);
         projectRepository.save(project);
 
@@ -65,9 +66,9 @@ public class ProjectServiceImp implements ProjectService {
     @Transactional
     public ProjectDTO updateProject(int id, ProjectRequest projectRequest) {
         User user = userRepository.findById(projectRequest.getUserId())
-                .orElseThrow(()-> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         projectRepository.findById(id)
-                .orElseThrow(()-> new NotFoundIdExceptionHandler("Không tìm thấy id project"));
+                .orElseThrow(()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id project"));
 
         Project project = projectMapper.updateProject(id, user, projectRequest);
         Project updatedProject = projectRepository.save(project);
@@ -77,7 +78,7 @@ public class ProjectServiceImp implements ProjectService {
     @Override
     @Transactional
     public ProjectDTO deleteProject(int id) {
-        Project project = projectRepository.findById(id).orElseThrow(()-> new NotFoundIdExceptionHandler("Không tìm thấy id project"));
+        Project project = projectRepository.findById(id).orElseThrow(()-> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id project"));
         projectRepository.delete(project);
         return projectMapper.toDto(project);
     }

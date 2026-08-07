@@ -1,9 +1,10 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.ReportDTO;
 import com.project.codinviec_core_service.entity.Report;
 import com.project.codinviec_core_service.entity.ReportStatus;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.ReportMapper;
 import com.project.codinviec_core_service.repository.ReportRepository;
 import com.project.codinviec_core_service.repository.ReportStatusRepository;
@@ -39,7 +40,7 @@ public class ReportServiceImp implements ReportService {
     @Override
     public ReportDTO getReportById(int id) {
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Report với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Report với ID: " + id));
         return reportMapper.toDTO(report);
     }
 
@@ -47,7 +48,7 @@ public class ReportServiceImp implements ReportService {
     @Transactional
     public ReportDTO createReport(ReportRequest request) {
         ReportStatus status = reportStatusRepository.findById(request.getStatusId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy ReportStatus với ID: " + request.getStatusId()));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy ReportStatus với ID: " + request.getStatusId()));
 
         Report entity = reportMapper.saveReport(request, status);
         return reportMapper.toDTO(reportRepository.save(entity));
@@ -57,10 +58,10 @@ public class ReportServiceImp implements ReportService {
     @Transactional
     public ReportDTO updateReport(int id, ReportRequest request) {
         reportRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Report với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Report với ID: " + id));
 
         ReportStatus status = reportStatusRepository.findById(request.getStatusId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy ReportStatus với ID: " + request.getStatusId()));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy ReportStatus với ID: " + request.getStatusId()));
 
         Report entity = reportMapper.updateReport(id, request, status);
         return reportMapper.toDTO(reportRepository.save(entity));
@@ -70,7 +71,7 @@ public class ReportServiceImp implements ReportService {
     @Transactional
     public void deleteReport(int id) {
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Report với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Report với ID: " + id));
         reportRepository.delete(report);
     }
     @Override

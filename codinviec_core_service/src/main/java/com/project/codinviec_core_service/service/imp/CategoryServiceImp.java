@@ -2,8 +2,8 @@ package com.project.codinviec_core_service.service.imp;
 
 import com.project.codinviec_core_service.dto.CategoryDTO;
 import com.project.codinviec_core_service.entity.Category;
-import com.project.codinviec_core_service.exception.common.ConflictExceptionHandler;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.CategoryMapper;
 import com.project.codinviec_core_service.repository.CategoryRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -70,7 +70,7 @@ public class CategoryServiceImp implements CategoryService {
     @Override
     public CategoryDTO getCategoryById(Integer id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id category"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id category"));
         return categoryMapper.categoryToCategoryDTO(category);
     }
 
@@ -80,13 +80,15 @@ public class CategoryServiceImp implements CategoryService {
         Category categoryParent = null;
         if (saveUpdateCategoryRequest.getParentId() != null && saveUpdateCategoryRequest.getParentId() > 0) {
             categoryParent = categoryRepository.findById(saveUpdateCategoryRequest.getParentId()).orElseThrow(
-                    () -> new NotFoundIdExceptionHandler("Không tìm thấy id cha của category!"));
+                    () -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id cha của category!"));
         }
         try {
             Category mappedCategory = categoryMapper.saveCategoryMapper(categoryParent, saveUpdateCategoryRequest);
             return categoryMapper.categoryToCategoryDTO(categoryRepository.save(mappedCategory));
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ConflictExceptionHandler("Lỗi thêm category");
+            throw new AppException(ResourceErrorCode.CONFLICT, "Lỗi thêm category");
         }
     }
 
@@ -96,16 +98,18 @@ public class CategoryServiceImp implements CategoryService {
         Category categoryParent = null;
         if (saveUpdateCategoryRequest.getParentId() != null && saveUpdateCategoryRequest.getParentId() > 0) {
             categoryParent = categoryRepository.findById(saveUpdateCategoryRequest.getParentId()).orElseThrow(
-                    () -> new NotFoundIdExceptionHandler("Không tìm thấy id cha của category!"));
+                    () -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id cha của category!"));
         }
         Category category = categoryRepository.findById(idCate)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id category"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id category"));
         try {
             Category mapperBlog = categoryMapper.updateCategoryMapper(idCate, categoryParent, saveUpdateCategoryRequest);
             mapperBlog.setCreatedDate(category.getCreatedDate());
             return categoryMapper.categoryToCategoryDTO(categoryRepository.save(mapperBlog));
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ConflictExceptionHandler("Lỗi cập nhật category!");
+            throw new AppException(ResourceErrorCode.CONFLICT, "Lỗi cập nhật category!");
         }
     }
 
@@ -113,7 +117,7 @@ public class CategoryServiceImp implements CategoryService {
     @Transactional
     public CategoryDTO deleteCategoryById(Integer id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id category"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id category"));
         categoryRepository.delete(category);
         return categoryMapper.categoryToCategoryDTO(category);
     }

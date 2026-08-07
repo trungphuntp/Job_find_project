@@ -1,8 +1,8 @@
 package com.project.codinviec_auth_service.controller;
 
 import com.project.codinviec_auth_service.dto.TokenDTO;
-import com.project.codinviec_auth_service.exception.security.ExpireTokenExceptionHandler;
-import com.project.codinviec_auth_service.exception.security.RefreshTokenExceptionHandler;
+import com.project.codinviec_auth_service.enums.AuthenticationErrorCode;
+import com.project.codinviec_auth_service.exception.AppException;
 import com.project.codinviec_auth_service.request.*;
 import com.project.codinviec_auth_service.response.BaseResponse;
 import com.project.codinviec_auth_service.service.AuthService;
@@ -18,17 +18,16 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
+
     @Value("${client.url}")
     private String clientUrl;
 
     private final AuthService authService;
     private final CookieHelper cookieHelper;
-
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
@@ -36,27 +35,25 @@ public class AuthenticationController {
         cookieHelper.addRefreshTokenCookie(response, tokenDTO.getRefreshToken());
         cookieHelper.addAccessTokenCookies(response, tokenDTO.getAccessToken());
         return ResponseEntity.ok(BaseResponse.success(tokenDTO, "OK"));
-
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> regsiter(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(BaseResponse.success(authService.register(registerRequest), "OK"));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(HttpServletRequest request,
-            HttpServletResponse response) {
+    public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshTokenRequest = cookieHelper.getRefreshToken(request).orElse(null);
         if (refreshTokenRequest == null || refreshTokenRequest.isEmpty()) {
-            throw new RefreshTokenExceptionHandler("Không tìm thấy Refresh Token!");
+            throw new AppException(AuthenticationErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
         try {
             TokenDTO tokenDTO = authService.refreshToken(refreshTokenRequest, response);
             cookieHelper.addRefreshTokenCookie(response, tokenDTO.getRefreshToken());
             cookieHelper.addAccessTokenCookies(response, tokenDTO.getAccessToken());
             return ResponseEntity.ok(BaseResponse.success(tokenDTO, "OK"));
-        } catch (RefreshTokenExceptionHandler e) {
+        } catch (AppException e) {
             cookieHelper.clearRefreshTokenCookie(response);
             cookieHelper.clearAccessTokenCookie(response);
             throw e;
@@ -64,28 +61,23 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout( HttpServletRequest request,HttpServletResponse response) {
-        try {
-            String refreshToken = cookieHelper.getRefreshToken(request).orElse(null);
-            if (refreshToken == null || refreshToken.isEmpty()) {
-                throw new RefreshTokenExceptionHandler("Token không hợp lệ!");
-            }
-            authService.logout(refreshToken, response);
-            return ResponseEntity.ok(BaseResponse.success("Đăng xuất thành công!", "OK"));
-        } catch (RefreshTokenExceptionHandler | ExpireTokenExceptionHandler e) {
-            throw new RefreshTokenExceptionHandler("Token không hợp lệ!");
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = cookieHelper.getRefreshToken(request).orElse(null);
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new AppException(AuthenticationErrorCode.REFRESH_TOKEN_INVALID);
         }
+        authService.logout(refreshToken, response);
+        return ResponseEntity.ok(BaseResponse.success("Đăng xuất thành công!", "OK"));
     }
 
     @GetMapping("/google")
     public void loginGoogle(HttpServletResponse response) throws IOException {
         String url = authService.buildUrlLoginGoogle();
         if (url == null) {
-            throw new RuntimeException("Lỗi đăng nhập google vui lòng thử lại!");
+            throw new AppException(AuthenticationErrorCode.GOOGLE_LOGIN_FAIL);
         }
         response.sendRedirect(url);
     }
-
 
     @GetMapping("/google/callback")
     public void googleCallback(
@@ -117,5 +109,4 @@ public class AuthenticationController {
         authService.verifyUserOtp(verifyUserRequest);
         return ResponseEntity.ok(BaseResponse.success("Verify otp user successfully!", "OK"));
     }
-
 }

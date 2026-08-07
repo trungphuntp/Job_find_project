@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp.payment;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.payment.ServiceProductDTO;
 import com.project.codinviec_core_service.entity.payment.ServiceProduct;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.payment.ServiceProductMapper;
 import com.project.codinviec_core_service.repository.JobRepository;
 import com.project.codinviec_core_service.repository.auth.UserRepository;
@@ -65,7 +66,7 @@ public class ServiceProductServiceImp implements ServiceProductService {
     @Override
     public ServiceProductDTO getById(Integer id) {
         ServiceProduct serviceProduct = serviceProductRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Id"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Id"));
         return serviceProductMapper.serviceProductDTO(serviceProduct);
     }
 
@@ -74,10 +75,10 @@ public class ServiceProductServiceImp implements ServiceProductService {
     public ServiceProductDTO create(ServiceProductRequest req) {
 
         userRepository.findById(req.getUserId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Id User"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Id User"));
 
         jobRepository.findById(req.getJobId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Id Job"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Id Job"));
 
         ServiceProduct serviceProduct = serviceProductMapper.saveServiceProduct(req);
         return serviceProductMapper.serviceProductDTO(serviceProductRepository.save(serviceProduct));
@@ -87,7 +88,7 @@ public class ServiceProductServiceImp implements ServiceProductService {
     @Transactional
     public ServiceProductDTO update(Integer id, ServiceProductRequest req) {
         ServiceProduct serviceProduct = serviceProductRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Id"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Id"));
         serviceProductMapper.updateServiceProduct(serviceProduct, req);
         return serviceProductMapper.serviceProductDTO(serviceProductRepository.save(serviceProduct));
     }
@@ -96,7 +97,7 @@ public class ServiceProductServiceImp implements ServiceProductService {
     @Transactional
     public ServiceProductDTO deleteById(Integer id) {
         ServiceProduct serviceProduct = serviceProductRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Id"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Id"));
         serviceProductRepository.delete(serviceProduct);
         return serviceProductMapper.serviceProductDTO(serviceProduct);
     }

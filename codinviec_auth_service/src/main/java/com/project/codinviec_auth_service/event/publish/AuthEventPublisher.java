@@ -1,12 +1,11 @@
 package com.project.codinviec_auth_service.event.publish;
 
 import com.project.codinviec_auth_service.entity.OutboxEventEntity;
+import com.project.codinviec_auth_service.enums.EmailErrorCode;
 import com.project.codinviec_auth_service.event.payload.CreateUserCorePayload;
 import com.project.codinviec_auth_service.event.payload.UserRegisterEmailPayload;
 import com.project.codinviec_auth_service.event.payload.VerifyRegisterPayload;
-import com.project.codinviec_auth_service.exception.event.SendEmailRegisterFail;
-import com.project.codinviec_auth_service.exception.event.SendEmailVerifyFail;
-import com.project.codinviec_auth_service.exception.event.UserRegisteredFail;
+import com.project.codinviec_auth_service.exception.AppException;
 import com.project.codinviec_auth_service.service.OutboxServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +16,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class AuthEventPublisher {
+
     private final ObjectMapper objectMapper;
     private final OutboxServices outboxServices;
     private final OutboxPublisher outboxPublisher;
@@ -32,7 +32,7 @@ public class AuthEventPublisher {
                     .build());
             outboxPublisher.markHasPendingEvents();
         } catch (RuntimeException e) {
-            throw new SendEmailRegisterFail();
+            throw new AppException(EmailErrorCode.SEND_REGISTER_EMAIL_FAIL);
         }
     }
 
@@ -46,9 +46,8 @@ public class AuthEventPublisher {
                     .createdDate(LocalDateTime.now())
                     .build());
             outboxPublisher.markHasPendingEvents();
-
         } catch (RuntimeException e) {
-            throw new SendEmailVerifyFail();
+            throw new AppException(EmailErrorCode.SEND_VERIFY_EMAIL_FAIL);
         }
     }
 
@@ -63,8 +62,7 @@ public class AuthEventPublisher {
                     .build());
             outboxPublisher.markHasPendingEvents();
         } catch (RuntimeException e) {
-            throw new UserRegisteredFail();
+            throw new AppException(EmailErrorCode.USER_REGISTER_EVENT_FAIL);
         }
     }
-
 }

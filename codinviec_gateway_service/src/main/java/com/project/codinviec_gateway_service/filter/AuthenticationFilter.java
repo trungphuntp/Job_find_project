@@ -2,14 +2,14 @@ package com.project.codinviec_gateway_service.filter;
 
 
 import com.project.codinviec_gateway_service.dto.JwtUserDTO;
-import com.project.codinviec_gateway_service.exception.security.AccessTokenExceptionHandler;
+import com.project.codinviec_gateway_service.enums.GatewayErrorCode;
+import com.project.codinviec_gateway_service.exception.AppException;
 import com.project.codinviec_gateway_service.util.CookieHelper;
 import com.project.codinviec_gateway_service.util.JWTHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -51,16 +51,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         String token = cookieHelper.getAccessToken(request).orElse(null);
 
-        // Không có token coi như chưa login
         if (token == null) {
             return chain.filter(exchange);
         }
 
-//        Đã login
         ServerHttpResponse response = exchange.getResponse();
         JwtUserDTO jwtUserDTO = jwtHelper.verifyAccessToken(token, keyVersionRedis, response);
         if (jwtUserDTO != null) {
-//                Gắn header lên request cho servives sau
             ServerHttpRequest mutatedRequest = request.mutate()
                     .header("X-User-Id", jwtUserDTO.getUserId())
                     .header("X-User-Roles", jwtUserDTO.getRole())
@@ -69,7 +66,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                     .build();
             return chain.filter(exchange.mutate().request(mutatedRequest).build());
         } else {
-            throw new AccessTokenExceptionHandler();
+            throw new AppException(GatewayErrorCode.TOKEN_INVALID);
         }
     }
 

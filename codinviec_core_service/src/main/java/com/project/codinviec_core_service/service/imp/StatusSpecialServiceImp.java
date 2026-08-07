@@ -1,9 +1,10 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.JobDTO;
 import com.project.codinviec_core_service.dto.StatusSpecialDTO;
 import com.project.codinviec_core_service.entity.StatusSpecial;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.JobMapper;
 import com.project.codinviec_core_service.mapper.StatusSpecialMapper;
 import com.project.codinviec_core_service.repository.JobRepository;
@@ -64,7 +65,7 @@ public class StatusSpecialServiceImp implements StatusSpecialService {
     @Override
     public StatusSpecialDTO getById(int id) {
         StatusSpecial s = statusSpecialRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy StatusSpecial ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy StatusSpecial ID: " + id));
         return statusSpecialMapper.toDTO(s);
     }
 
@@ -79,7 +80,7 @@ public class StatusSpecialServiceImp implements StatusSpecialService {
     @Transactional
     public StatusSpecialDTO update(int id, com.project.codinviec_core_service.request.StatusSpecialRequest request) {
         statusSpecialRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy StatusSpecial ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy StatusSpecial ID: " + id));
         StatusSpecial entity = statusSpecialMapper.updateStatusSpecial(id, request);
         return statusSpecialMapper.toDTO(statusSpecialRepository.save(entity));
     }
@@ -88,7 +89,7 @@ public class StatusSpecialServiceImp implements StatusSpecialService {
     @Transactional
     public StatusSpecialDTO delete(int id) {
         StatusSpecial s = statusSpecialRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy StatusSpecial ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy StatusSpecial ID: " + id));
         statusSpecialRepository.delete(s);
         return statusSpecialMapper.toDTO(s);
     }

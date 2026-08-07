@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.LanguageDTO;
 import com.project.codinviec_core_service.entity.Language;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.LanguageMapper;
 import com.project.codinviec_core_service.repository.LanguageRepository;
 import com.project.codinviec_core_service.request.LanguageRequest;
@@ -44,7 +45,7 @@ public class LanguageServiceImp implements LanguageService {
     @Override
     public LanguageDTO getLanguageById(Integer id) {
         Language language = languageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language"));
         return languageMapper.toDto(language);
     }
 
@@ -60,7 +61,7 @@ public class LanguageServiceImp implements LanguageService {
     @Transactional
     public LanguageDTO updateLanguage(int id, LanguageRequest languageRequest) {
         languageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language"));
 
         Language entity = languageMapper.updateLanguage(id, languageRequest);
         Language updatedLanguage = languageRepository.save(entity);
@@ -71,7 +72,7 @@ public class LanguageServiceImp implements LanguageService {
     @Transactional
     public LanguageDTO deleteLanguage(int id) {
         Language language = languageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id language"));
         languageRepository.delete(language);
         return languageMapper.toDto(language);
     }

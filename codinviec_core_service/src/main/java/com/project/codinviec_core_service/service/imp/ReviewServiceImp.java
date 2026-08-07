@@ -1,11 +1,12 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.ReviewDTO;
 import com.project.codinviec_core_service.dto.UserReviewDTO;
 import com.project.codinviec_core_service.entity.Review;
 import com.project.codinviec_core_service.entity.auth.Company;
 import com.project.codinviec_core_service.entity.auth.User;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.ReviewMapper;
 import com.project.codinviec_core_service.repository.ReviewRepository;
 import com.project.codinviec_core_service.repository.auth.CompanyRepository;
@@ -59,7 +60,7 @@ public class ReviewServiceImp implements ReviewService {
 
     @Override
     public ReviewDTO getReviewById(Integer id) {
-        Review review= reviewRepository.findById(id).orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id review"));
+        Review review= reviewRepository.findById(id).orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id review"));
         return reviewMapper.reviewToReviewDTO(review, true);
     }
 
@@ -67,9 +68,9 @@ public class ReviewServiceImp implements ReviewService {
     @Transactional
     public ReviewDTO saveReview(SaveUpdateReviewRequest saveUpdateReviewRequest) {
         User user = userRepository.findById(saveUpdateReviewRequest.getUserId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         Company company = companyRepository.findById(saveUpdateReviewRequest.getCompanyId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id company"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company"));
         Review review = reviewMapper.saveReviewMapper(user,company,saveUpdateReviewRequest);
         return reviewMapper.reviewToReviewDTO(reviewRepository.save(review), true);
     }
@@ -78,11 +79,11 @@ public class ReviewServiceImp implements ReviewService {
     @Transactional
     public ReviewDTO updateReview(Integer reviewId, SaveUpdateReviewRequest saveUpdateReviewRequest) {
         reviewRepository.findById(reviewId)
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id review"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id review"));
         User user = userRepository.findById(saveUpdateReviewRequest.getUserId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         Company company = companyRepository.findById(saveUpdateReviewRequest.getCompanyId())
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id company"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company"));
 
         Review mapperReview = reviewMapper.updateReviewMapper(reviewId ,user,company,saveUpdateReviewRequest);
         return reviewMapper.reviewToReviewDTO(reviewRepository.save(mapperReview), true);
@@ -92,7 +93,7 @@ public class ReviewServiceImp implements ReviewService {
     @Transactional
     public ReviewDTO deleteReview(Integer reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id review"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id review"));
         reviewRepository.delete(review);
         return reviewMapper.reviewToReviewDTO(review,true);
     }
@@ -100,7 +101,7 @@ public class ReviewServiceImp implements ReviewService {
     @Override
     public UserReviewDTO getReviewsByUserId(String userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         List<ReviewDTO> listReview = user.getListReview().stream().map(review -> reviewMapper.reviewToReviewDTO(review , false)).toList();
         return reviewMapper.reviewToUserReviewDTO(user,listReview);
     }
@@ -108,7 +109,7 @@ public class ReviewServiceImp implements ReviewService {
     @Override
     public List<ReviewDTO> getReviewsByCompanyId(String companyId) {
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(()->new NotFoundIdExceptionHandler("Không tìm thấy id company"));
+                .orElseThrow(()->new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company"));
         return company.getListReview().stream().map(review -> reviewMapper.reviewToReviewDTO(review,true)).toList();
     }
 }

@@ -5,8 +5,8 @@ import com.project.codinviec_core_service.entity.*;
 import com.project.codinviec_core_service.entity.auth.Company;
 import com.project.codinviec_core_service.entity.auth.User;
 import com.project.codinviec_core_service.entity.key.JobUserKey;
-import com.project.codinviec_core_service.exception.common.ConflictExceptionHandler;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 import com.project.codinviec_core_service.mapper.AvailableSkillMapper;
 import com.project.codinviec_core_service.mapper.JobMapper;
 import com.project.codinviec_core_service.mapper.StatusSpecialMapper;
@@ -67,32 +67,6 @@ public class JobServiceImp implements JobService {
     @Override
     public Page<JobDTO> getAllJobPage(PageRequestCustom pageRequestCustom) {
         PageRequestCustom pageRequestValidate = pageCustomHelper.validatePageCustom(pageRequestCustom);
-//        Sort sort = switch (pageRequestValidate.getSortBy()) {
-//            case "jobPositionAsc" -> Sort.by(Sort.Direction.ASC, "jobPosition");
-//            case "jobPositionDesc" -> Sort.by(Sort.Direction.DESC, "jobPosition");
-//
-//            case "companyIdAsc" -> Sort.by(Sort.Direction.ASC, "companyId");
-//            case "companyIdDesc" -> Sort.by(Sort.Direction.DESC, "companyId");
-//
-//            case "detailAddressAsc" -> Sort.by(Sort.Direction.ASC, "detailAddress");
-//            case "detailAddressDesc" -> Sort.by(Sort.Direction.DESC, "detailAddress");
-//
-//            case "descriptionJobAsc" -> Sort.by(Sort.Direction.ASC, "descriptionJob");
-//            case "descriptionJobDesc" -> Sort.by(Sort.Direction.DESC, "descriptionJob");
-//
-//            case "requirementsAsc" -> Sort.by(Sort.Direction.ASC, "requirement");
-//            case "requirementsDesc" -> Sort.by(Sort.Direction.DESC, "requirement");
-//
-//            case "benefitsAsc" -> Sort.by(Sort.Direction.ASC, "benefits");
-//            case "benefitsDesc" -> Sort.by(Sort.Direction.DESC, "benefits");
-//
-//            case "createdDateAsc" -> Sort.by(Sort.Direction.ASC, "createdDate");
-//
-//            case "updatedDateAsc" -> Sort.by(Sort.Direction.ASC, "updatedDate");
-//            case "updatedDateDesc" -> Sort.by(Sort.Direction.DESC, "updatedDate");
-//
-//            default -> Sort.by(Sort.Direction.DESC, "createdDate");
-//        };
 
         Pageable pageable = PageRequest.of(pageRequestValidate.getPageNumber() - 1, pageRequestValidate.getPageSize());
 
@@ -132,7 +106,7 @@ public class JobServiceImp implements JobService {
     @Override
     public JobDTO getJobById(int id) {
         Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Job ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Job ID: " + id));
         List<JobDTO> list = List.of(jobMapper.toDTO(job));
         enrichJobDTOs(list);
         return list.get(0);
@@ -141,7 +115,7 @@ public class JobServiceImp implements JobService {
     @Override
     public List<JobDTO> getJobByIdCompany(String companyId) {
         companyRepository.findById(companyId)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy company"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy company"));
         List<JobDTO> jobDTOList = jobRepository.getJobByCompany_Id(companyId)
                 .stream().map(jobMapper::toDTO).toList();
         enrichJobDTOs(jobDTOList);
@@ -152,7 +126,7 @@ public class JobServiceImp implements JobService {
     @Transactional
     public JobDTO createJob(JobRequest request) {
         Company company = companyRepository.findById(request.getCompanyId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id Company"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id Company"));
 
         Job job = Job.builder()
                 .jobPosition(request.getJobPosition())
@@ -161,11 +135,8 @@ public class JobServiceImp implements JobService {
                 .descriptionJob(request.getDescriptionJob())
                 .requirement(request.getRequirement())
                 .benefits(request.getBenefits())
-                .province(Province.builder()
-                        .id(request.getProvinceId()).build())
-                .industry(Industry.builder()
-                        .id(request.getIndustryId())
-                        .build())
+                .province(Province.builder().id(request.getProvinceId()).build())
+                .industry(Industry.builder().id(request.getIndustryId()).build())
                 .jobLevel(JobLevel.builder().id(request.getJobLevelId()).build())
                 .degreeLevel(DegreeLevel.builder().id(request.getDegreeLevelId()).build())
                 .employmentType(EmploymentType.builder().id(request.getEmploymentTypeId()).build())
@@ -180,10 +151,10 @@ public class JobServiceImp implements JobService {
     @Transactional
     public JobDTO updateJob(int id, JobRequest request) {
         jobRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Job ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Job ID: " + id));
 
         Company company = companyRepository.findById(request.getCompanyId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id Company"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id Company"));
 
         Job job = Job.builder()
                 .id(id)
@@ -193,11 +164,8 @@ public class JobServiceImp implements JobService {
                 .descriptionJob(request.getDescriptionJob())
                 .requirement(request.getRequirement())
                 .benefits(request.getBenefits())
-                .province(Province.builder()
-                        .id(request.getProvinceId()).build())
-                .industry(Industry.builder()
-                        .id(request.getIndustryId())
-                        .build())
+                .province(Province.builder().id(request.getProvinceId()).build())
+                .industry(Industry.builder().id(request.getIndustryId()).build())
                 .jobLevel(JobLevel.builder().id(request.getJobLevelId()).build())
                 .degreeLevel(DegreeLevel.builder().id(request.getDegreeLevelId()).build())
                 .employmentType(EmploymentType.builder().id(request.getEmploymentTypeId()).build())
@@ -212,7 +180,7 @@ public class JobServiceImp implements JobService {
     @Transactional
     public void deleteJob(int id) {
         Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Job ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Job ID: " + id));
         jobRepository.delete(job);
     }
 
@@ -245,15 +213,15 @@ public class JobServiceImp implements JobService {
     @Transactional
     public JobDTO applyJob(ApplyJobRequest applyJobRequest) {
         Job job = jobRepository.findById(applyJobRequest.getIdJob())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Job ID: " + applyJobRequest.getIdJob()));
-        User user = userRepository.findById(applyJobRequest.getUserId()).orElseThrow(
-                () -> new NotFoundIdExceptionHandler("Không tìm thấy id user"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Job ID: " + applyJobRequest.getIdJob()));
+        User user = userRepository.findById(applyJobRequest.getUserId())
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id user"));
         if (user.getCv() == null){
-            throw new ConflictExceptionHandler("Không tìm thấy CV của User");
+            throw new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy CV của User");
         }
         JobUser existed = jobUserRepository.findById(new JobUserKey(job.getId(), user.getId())).orElse(null);
         if (existed != null) {
-            throw new ConflictExceptionHandler("Bạn đã apply công việc này rồi");
+            throw new AppException(ResourceErrorCode.CONFLICT, "Bạn đã apply công việc này rồi");
         }
         jobUserRepository.save(JobUser.builder().id(JobUserKey.builder()
                 .jobId(job.getId()).userId(user.getId()).build())

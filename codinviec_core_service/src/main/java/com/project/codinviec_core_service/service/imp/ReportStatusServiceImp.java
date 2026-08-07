@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.ReportStatusDTO;
 import com.project.codinviec_core_service.entity.ReportStatus;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.ReportStatusMapper;
 import com.project.codinviec_core_service.repository.ReportStatusRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -62,7 +63,7 @@ public class ReportStatusServiceImp implements ReportStatusService {
     @Override
     public ReportStatusDTO getStatusById(int id) {
         ReportStatus status = reportStatusRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy ReportStatus với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy ReportStatus với ID: " + id));
         return reportStatusMapper.toDTO(status);
     }
 
@@ -77,7 +78,7 @@ public class ReportStatusServiceImp implements ReportStatusService {
     @Transactional
     public ReportStatusDTO updateStatus(int id, ReportStatusRequest request) {
         reportStatusRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy ReportStatus với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy ReportStatus với ID: " + id));
         ReportStatus entity = reportStatusMapper.updateReportStatus(id, request);
         return reportStatusMapper.toDTO(reportStatusRepository.save(entity));
     }
@@ -86,7 +87,7 @@ public class ReportStatusServiceImp implements ReportStatusService {
     @Transactional
     public void delete(int id) {
         ReportStatus status = reportStatusRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy ReportStatus với ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy ReportStatus với ID: " + id));
         reportStatusRepository.delete(status);
     }
 }

@@ -6,13 +6,11 @@ import com.project.codinviec_auth_service.dto.TokenDTO;
 import com.project.codinviec_auth_service.dto.VerifyUserDTO;
 import com.project.codinviec_auth_service.entity.RoleEntity;
 import com.project.codinviec_auth_service.entity.UserEntity;
+import com.project.codinviec_auth_service.enums.AuthenticationErrorCode;
+import com.project.codinviec_auth_service.enums.EmailErrorCode;
 import com.project.codinviec_auth_service.event.payload.CreateUserCorePayload;
 import com.project.codinviec_auth_service.event.publish.AuthEventPublisher;
-import com.project.codinviec_auth_service.exception.event.ResendVerifyOtpOverCounter;
-import com.project.codinviec_auth_service.exception.event.ResendVerifyOtpUserFail;
-import com.project.codinviec_auth_service.exception.event.SendVerifyOtpUserFail;
-import com.project.codinviec_auth_service.exception.event.VerifyOtpFail;
-import com.project.codinviec_auth_service.exception.security.*;
+import com.project.codinviec_auth_service.exception.AppException;
 import com.project.codinviec_auth_service.mapper.RegisterMapper;
 import com.project.codinviec_auth_service.repository.RoleRepository;
 import com.project.codinviec_auth_service.repository.UserRepository;
@@ -49,6 +47,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImp implements AuthService {
+
     @Value("${google.client-id}")
     private String clientId;
 
@@ -57,7 +56,6 @@ public class AuthServiceImp implements AuthService {
 
     @Value("${google.client-secret}")
     private String clientSecret;
-
 
     @Qualifier("redisTemplateDb0")
     private final RedisTemplate<String, String> redisTemplateDb;
@@ -73,36 +71,23 @@ public class AuthServiceImp implements AuthService {
     private final AuthEventPublisher authEventPublisher;
     private final DeviceSessionService deviceSessionService;
 
-    /***
-     * Key redis note
-     */
-//    token:refresh:{userId}:{user_devices} = refreshToken
     private final String keyRefreshTokenRedis = "token:refresh:";
-    //    token:version:{userId} = giá trị version token
     private final String keyVersionRedis = "token:version:";
-    //    otp key
     private final String keyOtpUser = "register:otp:";
-
 
     @Override
     public TokenDTO login(LoginRequest loginRequest) {
         UserEntity user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> {
-                    // điếm số lần nhập sai
-                    return new WrongPasswordOrEmailExceptionHandler("Tài khoản hoặc mật khẩu không hợp lệ!");
-                });
+                .orElseThrow(() -> new AppException(AuthenticationErrorCode.INVALID_CREDENTIALS));
 
-//        check pass
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new WrongPasswordOrEmailExceptionHandler("Tài khoản hoặc mật khẩu không hợp lệ!");
+            throw new AppException(AuthenticationErrorCode.INVALID_CREDENTIALS);
         }
 
-//        check block
         if (user.getIsBlock()) {
-            throw new BlockLoginUserExceptionHandler("Tài khoản đã bị khóa hãy liên hệ admin!");
+            throw new AppException(AuthenticationErrorCode.ACCOUNT_BLOCKED);
         }
 
-        //        xử lí tokenVersion
         int tokenVersion = 1;
         if (redisTemplateDb.hasKey(keyVersionRedis + user.getId())) {
             tokenVersion = Integer.parseInt(Objects.requireNonNull(redisTemplateDb.opsForValue().get(keyVersionRedis + user.getId())));
@@ -112,12 +97,12 @@ public class AuthServiceImp implements AuthService {
         String userDevices = UUID.randomUUID().toString();
 
         String accessToken = jwtHepler.createAccessToken(user.getRole().getRoleName(), tokenVersion, user.getId(), userDevices);
-        String refershToken = jwtHepler.createRefreshToken(user.getRole().getRoleName(), user.getId(), keyRefreshTokenRedis, tokenVersion, userDevices);
+        String refreshToken = jwtHepler.createRefreshToken(user.getRole().getRoleName(), user.getId(), keyRefreshTokenRedis, tokenVersion, userDevices);
         deviceSessionService.registerDevice(user.getId(), userDevices, keyRefreshTokenRedis);
 
         return TokenDTO.builder()
                 .accessToken(accessToken)
-                .refreshToken(refershToken)
+                .refreshToken(refreshToken)
                 .devicesId(userDevices)
                 .build();
     }
@@ -127,7 +112,7 @@ public class AuthServiceImp implements AuthService {
     public String register(RegisterRequest registerRequest) {
         userRepository.findByEmail(registerRequest.getEmail())
                 .ifPresent(user -> {
-                    throw new EmailAlreadyExistsExceptionHandler("Email đã tồn tại!");
+                    throw new AppException(EmailErrorCode.EMAIL_ALREADY_EXISTS);
                 });
 
         RoleEntity defaultRole = roleRepository.findByRoleNameIgnoreCase("USER")
@@ -140,12 +125,11 @@ public class AuthServiceImp implements AuthService {
         UserEntity user = registerMapper.saveRegister(registerRequest, defaultRole);
         UserEntity savedUser = userRepository.save(user);
 
-//        publish to Notification
-        if (!savedUser.getId().isBlank() && !savedUser.getId().isEmpty() && savedUser.getId() != null) {
+        if (savedUser.getId() != null && !savedUser.getId().isBlank()) {
             try {
                 verifyUserHelper.sendOtpUserEmail(savedUser.getEmail(), 0, keyOtpUser);
             } catch (Exception e) {
-                throw new SendVerifyOtpUserFail();
+                throw new AppException(EmailErrorCode.SEND_OTP_FAIL);
             }
         }
         return "Vui lòng xác thực tài khoản!";
@@ -156,16 +140,16 @@ public class AuthServiceImp implements AuthService {
     public TokenDTO refreshToken(String refreshtoken, HttpServletResponse response) {
         JwtUserDTO userJwt = jwtHepler.verifyRefreshToken(refreshtoken, keyRefreshTokenRedis, keyVersionRedis, response);
         String accessToken = jwtHepler.createAccessToken(userJwt.getRole(), userJwt.getTokenVersion(), userJwt.getUserId(), userJwt.getDeviceId());
-        String refershToken = jwtHepler.createRefreshToken(userJwt.getRole(), userJwt.getUserId(), keyRefreshTokenRedis, userJwt.getTokenVersion(), userJwt.getDeviceId());
+        String refreshToken = jwtHepler.createRefreshToken(userJwt.getRole(), userJwt.getUserId(), keyRefreshTokenRedis, userJwt.getTokenVersion(), userJwt.getDeviceId());
         return TokenDTO.builder()
                 .accessToken(accessToken)
-                .refreshToken(refershToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 
     @Transactional
     @Override
-    public void logout(String refreshToken,  HttpServletResponse response) {
+    public void logout(String refreshToken, HttpServletResponse response) {
         JwtUserDTO userJwt = jwtHepler.verifyRefreshToken(refreshToken, keyRefreshTokenRedis, keyVersionRedis, response);
         deviceSessionService.logoutDevice(userJwt.getUserId(), userJwt.getDeviceId());
         jwtHepler.revokeAllTokens(userJwt.getUserId(), userJwt.getDeviceId(), keyRefreshTokenRedis, response);
@@ -174,40 +158,38 @@ public class AuthServiceImp implements AuthService {
     @Override
     public void resendOtp(ResendOtpRequest resendOtpRequest) {
         try {
-            UserEntity user = userRepository.findByEmail(resendOtpRequest.getEmail()).orElseThrow(
-                    UnregisteredUsers::new
-            );
+            UserEntity user = userRepository.findByEmail(resendOtpRequest.getEmail())
+                    .orElseThrow(() -> new AppException(AuthenticationErrorCode.USER_NOT_REGISTERED));
+
             if (redisTemplateDb.hasKey(keyVersionRedis + user.getId())) {
                 String json = redisTemplateDb.opsForValue().get(user.getEmail());
                 VerifyUserDTO verifyUserDTO = objectMapper.readValue(json, VerifyUserDTO.class);
                 if (verifyUserDTO.getCounterResend() <= 5) {
                     verifyUserHelper.sendOtpUserEmail(user.getEmail(), 0, keyOtpUser);
                 } else {
-                    throw new ResendVerifyOtpOverCounter();
+                    throw new AppException(AuthenticationErrorCode.OTP_RESEND_EXCEEDED);
                 }
             } else {
                 verifyUserHelper.sendOtpUserEmail(user.getEmail(), 0, keyOtpUser);
             }
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ResendVerifyOtpUserFail();
+            throw new AppException(EmailErrorCode.RESEND_OTP_FAIL);
         }
-
     }
 
     @Override
     @Transactional
     public void verifyUserOtp(VerifyUserRequest verifyUserRequest) {
         try {
-            UserEntity user = userRepository.findByEmail(verifyUserRequest.getEmail()).orElseThrow(
-                    () -> new UnregisteredUsers()
-            );
-            if (redisTemplateDb.hasKey(keyOtpUser + user.getEmail())) {
+            UserEntity user = userRepository.findByEmail(verifyUserRequest.getEmail())
+                    .orElseThrow(() -> new AppException(AuthenticationErrorCode.USER_NOT_REGISTERED));
 
+            if (redisTemplateDb.hasKey(keyOtpUser + user.getEmail())) {
                 String json = redisTemplateDb.opsForValue().get(keyOtpUser + user.getEmail());
                 VerifyUserDTO verifyUserDTO = objectMapper.readValue(json, VerifyUserDTO.class);
                 if (verifyUserDTO.getOtp().equalsIgnoreCase(verifyUserRequest.getOtp())) {
-
-//                   Gửi sự kiện cho codinviec core tạo user
                     authEventPublisher.publishUserRegisteredSuccess(CreateUserCorePayload.builder()
                             .id(user.getId())
                             .avatar(user.getAvatar())
@@ -222,31 +204,21 @@ public class AuthServiceImp implements AuthService {
                             .roleName(user.getRole().getRoleName())
                             .build());
                 } else {
-                    throw new VerifyOtpFail();
+                    throw new AppException(AuthenticationErrorCode.OTP_INVALID);
                 }
             } else {
-                throw new VerifyOtpFail();
+                throw new AppException(AuthenticationErrorCode.OTP_INVALID);
             }
-        } catch (UnregisteredUsers unregisteredUsers) {
-            throw new UnregisteredUsers();
-        } catch (VerifyOtpFail verifyOtpFail) {
-            throw new VerifyOtpFail();
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            throw new VerifyOtpFail();
+            throw new AppException(AuthenticationErrorCode.OTP_INVALID);
         }
     }
 
     @Override
     public TokenDTO loginGoogleHandler(String code) {
         try {
-//         Đổi token từ code trả về để có token google lấy thông tin user
-//            Json khi call về
-//      {
-//          "access_token": "ya29.a0...",
-//          "expires_in": 3599,
-//          "token_type": "Bearer",
-//          "id_token": "eyJhbGciOiJSUzI1NiIs..."
-//      }
             GoogleTokenResponse tokenResponse =
                     new GoogleAuthorizationCodeTokenRequest(
                             new NetHttpTransport(),
@@ -256,40 +228,25 @@ public class AuthServiceImp implements AuthService {
                             code,
                             redirectUri
                     ).execute();
-//         Chuẩn bị đường dẫn để call api google tiếp
-            HttpRequestFactory factory =
-                    new NetHttpTransport().createRequestFactory();
-            GenericUrl url =
-                    new GenericUrl("https://www.googleapis.com/oauth2/v2/userinfo");
-            HttpRequest request = factory.buildGetRequest(url);
 
-//           Gắn token google và đường dẫn call api
+            HttpRequestFactory factory = new NetHttpTransport().createRequestFactory();
+            GenericUrl url = new GenericUrl("https://www.googleapis.com/oauth2/v2/userinfo");
+            HttpRequest request = factory.buildGetRequest(url);
             request.getHeaders().setAuthorization("Bearer " + tokenResponse.getAccessToken());
 
-//           Call thông tin user đăng nhập từ google về
-            String response = request.execute().parseAsString();
-            JsonNode node = objectMapper.readTree(response);
-//           JSON google trả về
-//            {
-//                      "id": "10923819283",
-//                    "email": "abc@gmail.com",
-//                    "verified_email": true,
-//                    "name": "Nguyen Van A",
-//                    "given_name": "Nguyen",
-//                    "family_name": "Van A",
-//                    "picture": "https://lh3.googleusercontent.com/..."
-//            }
+            String responseBody = request.execute().parseAsString();
+            JsonNode node = objectMapper.readTree(responseBody);
+
             GoogleInfoDTO googleInfoDTO = GoogleInfoDTO.builder()
-                    .googleId(node.path("id").asText() != null ? node.path("id").asText() : null)
-                    .email(node.get("email").asText() != null ? node.get("email").asText() : null)
-                    .lastName(node.get("given_name").asText() != null ? node.get("given_name").asText() : null)
-                    .firstName(node.get("family_name").asText() != null ? node.get("family_name").asText() : null)
-                    .picture(node.get("picture").asText() != null ? node.get("picture").asText() : null)
+                    .googleId(node.path("id").asText(null))
+                    .email(node.get("email").asText(null))
+                    .lastName(node.get("given_name").asText(null))
+                    .firstName(node.get("family_name").asText(null))
+                    .picture(node.get("picture").asText(null))
                     .build();
 
             UserEntity user = userRepository.findByEmail(googleInfoDTO.getEmail()).orElse(null);
             if (user == null) {
-                // Nếu user chưa tồn tại, tạo user mới
                 RoleEntity defaultRole = roleRepository.findByRoleNameIgnoreCase("USER")
                         .orElseGet(() -> roleRepository.save(RoleEntity.builder()
                                 .roleName("USER")
@@ -310,64 +267,58 @@ public class AuthServiceImp implements AuthService {
                         .updatedDate(LocalDateTime.now())
                         .build();
                 user = userRepository.save(user);
-                if (user != null) {
-                    //                   Gửi sự kiện cho codinviec core tạo user
-                    authEventPublisher.publishUserRegisteredSuccess(CreateUserCorePayload.builder()
-                            .id(user.getId())
-                            .avatar(user.getAvatar())
-                            .email(user.getEmail())
-                            .password(user.getPassword())
-                            .firstName(user.getFirstName())
-                            .lastName(user.getLastName())
-                            .isBlock(user.getIsBlock())
-                            .status(user.getStatus())
-                            .createdDate(user.getCreatedDate())
-                            .updatedDate(user.getUpdatedDate())
-                            .roleName(user.getRole().getRoleName())
-                            .build());
-                } else {
-                    throw new LoginFaildExceptionHandler("Login google thất bại!");
+                if (user == null) {
+                    throw new AppException(AuthenticationErrorCode.GOOGLE_LOGIN_FAIL);
                 }
+                authEventPublisher.publishUserRegisteredSuccess(CreateUserCorePayload.builder()
+                        .id(user.getId())
+                        .avatar(user.getAvatar())
+                        .email(user.getEmail())
+                        .password(user.getPassword())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .isBlock(user.getIsBlock())
+                        .status(user.getStatus())
+                        .createdDate(user.getCreatedDate())
+                        .updatedDate(user.getUpdatedDate())
+                        .roleName(user.getRole().getRoleName())
+                        .build());
             } else {
-                // Nếu user đã tồn tại, cập nhật thông tin từ Google
                 if (googleInfoDTO.getFirstName() == null || googleInfoDTO.getFirstName().isEmpty()) {
                     user.setFirstName(googleInfoDTO.getFirstName());
                 }
-
                 if (googleInfoDTO.getLastName() == null || googleInfoDTO.getLastName().isEmpty()) {
                     user.setLastName(googleInfoDTO.getLastName());
                 }
-
                 if (googleInfoDTO.getPicture() == null || googleInfoDTO.getPicture().isEmpty()) {
                     user.setAvatar(googleInfoDTO.getPicture());
                 }
-
                 user.setUpdatedDate(LocalDateTime.now());
                 user = userRepository.save(user);
             }
 
-            //        xử lí tokenVersion
             int tokenVersion = 1;
             if (redisTemplateDb.hasKey(keyVersionRedis + user.getId())) {
                 tokenVersion = Integer.parseInt(Objects.requireNonNull(redisTemplateDb.opsForValue().get(keyVersionRedis + user.getId())));
             } else {
                 redisTemplateDb.opsForValue().set(keyVersionRedis + user.getId(), String.valueOf(tokenVersion));
             }
-            String devicedID = UUID.randomUUID().toString();
+            String deviceId = UUID.randomUUID().toString();
 
-            String accessToken = jwtHepler.createAccessToken(user.getRole().getRoleName(), tokenVersion, user.getId(), devicedID);
-            String refershToken = jwtHepler.createRefreshToken(user.getRole().getRoleName(), user.getId(), keyRefreshTokenRedis, tokenVersion, devicedID);
-            deviceSessionService.registerDevice(user.getId(), devicedID, keyRefreshTokenRedis);
+            String accessToken = jwtHepler.createAccessToken(user.getRole().getRoleName(), tokenVersion, user.getId(), deviceId);
+            String refreshToken = jwtHepler.createRefreshToken(user.getRole().getRoleName(), user.getId(), keyRefreshTokenRedis, tokenVersion, deviceId);
+            deviceSessionService.registerDevice(user.getId(), deviceId, keyRefreshTokenRedis);
+
             return TokenDTO.builder()
                     .accessToken(accessToken)
-                    .refreshToken(refershToken)
-                    .devicesId(devicedID)
+                    .refreshToken(refreshToken)
+                    .devicesId(deviceId)
                     .build();
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
-            throw new LoginFaildExceptionHandler("Login google thất bại!");
+            throw new AppException(AuthenticationErrorCode.GOOGLE_LOGIN_FAIL);
         }
-
-
     }
 
     @Override
@@ -380,5 +331,4 @@ public class AuthServiceImp implements AuthService {
                 + "&access_type=offline"
                 + "&prompt=consent";
     }
-
 }

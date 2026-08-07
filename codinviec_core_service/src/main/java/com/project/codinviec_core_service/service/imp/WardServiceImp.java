@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.WardDTO;
 import com.project.codinviec_core_service.entity.Ward;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.WardMapper;
 import com.project.codinviec_core_service.repository.WardRepository;
 import com.project.codinviec_core_service.request.PageRequestCustom;
@@ -77,7 +78,7 @@ public class WardServiceImp implements WardService {
     @Override
     public WardDTO getById(int id) {
         Ward ward = wardRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Ward ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Ward ID: " + id));
         return wardMapper.toDTO(ward);
     }
 
@@ -92,7 +93,7 @@ public class WardServiceImp implements WardService {
     @Transactional
     public WardDTO update(int id, WardRequest request) {
         wardRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Ward ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Ward ID: " + id));
         Ward entity = wardMapper.updateWard(id, request);
         return wardMapper.toDTO(wardRepository.save(entity));
     }
@@ -101,7 +102,7 @@ public class WardServiceImp implements WardService {
     @Transactional
     public void delete(int id) {
         Ward ward = wardRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy Ward ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy Ward ID: " + id));
         wardRepository.delete(ward);
     }
 }

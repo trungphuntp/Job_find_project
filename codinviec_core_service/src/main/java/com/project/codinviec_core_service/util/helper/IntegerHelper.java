@@ -1,6 +1,7 @@
 package com.project.codinviec_core_service.util.helper;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
-import com.project.codinviec_core_service.exception.common.ParamExceptionHandler;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -9,7 +10,7 @@ public class IntegerHelper {
         try {
             return Integer.parseInt(String.valueOf(value));
         } catch (NumberFormatException e) {
-            throw new ParamExceptionHandler("Truyền " + messageName + " không hợp lệ!");
+            throw new AppException(ResourceErrorCode.INVALID_PARAM, "Truyền " + messageName + " không hợp lệ!");
         }
     }
 }

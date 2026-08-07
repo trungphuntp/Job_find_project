@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.LevelLanguageDTO;
 import com.project.codinviec_core_service.entity.LevelLanguage;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.LevelLanguageMapper;
 import com.project.codinviec_core_service.repository.LevelLanguageRepository;
 import com.project.codinviec_core_service.request.LevelLanguageRequest;
@@ -44,7 +45,7 @@ public class LevelLanguageServiceImp implements LevelLanguageService {
     @Override
     public LevelLanguageDTO getLevelLanguageById(Integer id) {
         LevelLanguage levelLanguage = levelLanguageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id level_language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id level_language"));
         return levelLanguageMapper.toDto(levelLanguage);
     }
 
@@ -60,7 +61,7 @@ public class LevelLanguageServiceImp implements LevelLanguageService {
     @Transactional
     public LevelLanguageDTO updateLevelLanguage(int id, LevelLanguageRequest levelLanguageRequest) {
         levelLanguageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id level_language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id level_language"));
 
         LevelLanguage entity = levelLanguageMapper.updateLevelLanguage(id, levelLanguageRequest);
         LevelLanguage updated = levelLanguageRepository.save(entity);
@@ -71,7 +72,7 @@ public class LevelLanguageServiceImp implements LevelLanguageService {
     @Transactional
     public LevelLanguageDTO deleteLevelLanguage(int id) {
         LevelLanguage levelLanguage = levelLanguageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id level_language"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id level_language"));
         levelLanguageRepository.delete(levelLanguage);
         return levelLanguageMapper.toDto(levelLanguage);
     }

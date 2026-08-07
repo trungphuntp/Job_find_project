@@ -1,11 +1,12 @@
 package com.project.codinviec_core_service.service.imp.auth;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.auth.CompanyDTO;
 import com.project.codinviec_core_service.entity.CompanyAddress;
 import com.project.codinviec_core_service.entity.CompanySize;
 import com.project.codinviec_core_service.entity.StatusSpecialCompany;
 import com.project.codinviec_core_service.entity.auth.Company;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.CompanyAddressMapper;
 import com.project.codinviec_core_service.mapper.CompanySizeMapper;
 import com.project.codinviec_core_service.mapper.StatusSpecialMapper;
@@ -109,7 +110,7 @@ public class CompanyServiceImp implements CompanyService {
     @Override
     public CompanyDTO getCompanyById(String idCompany) {
         Company company = companyRepository.findById(idCompany)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id company!"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company!"));
         CompanyDTO companyDTO = companyMapper.companyToCompanyDTO(company);
         companyDTO.setStatusSpecials(statusSpecialMapper
                 .StatusSpecialCompanyToStatusSpecialDTO(statusSpecialCompanyRepository
@@ -127,7 +128,7 @@ public class CompanyServiceImp implements CompanyService {
     @Transactional
     public CompanyDTO saveCompany(SaveUpdateCompanyRequest saveUpdateCompanyRequest) {
         CompanySize companySize = companySizeRepository.findById(saveUpdateCompanyRequest.getCompanySizeId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id company size!"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company size!"));
         Company company = companyMapper.saveCompanyMapper(companySize, saveUpdateCompanyRequest);
         return companyMapper.companyToCompanyDTO(companyRepository.save(company));
     }
@@ -136,9 +137,9 @@ public class CompanyServiceImp implements CompanyService {
     @Transactional
     public CompanyDTO updateCompany(String idCompany, SaveUpdateCompanyRequest saveUpdateCompanyRequest) {
         CompanySize companySize = companySizeRepository.findById(saveUpdateCompanyRequest.getCompanySizeId())
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id company size!"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company size!"));
         Company company = companyRepository.findById(idCompany)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id company!"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company!"));
         Company mappedCompany = companyMapper.updateCompanyMapper(idCompany, companySize, saveUpdateCompanyRequest);
         mappedCompany.setCreatedDate(company.getCreatedDate());
         return companyMapper.companyToCompanyDTO(companyRepository.save(mappedCompany));
@@ -148,7 +149,7 @@ public class CompanyServiceImp implements CompanyService {
     @Transactional
     public CompanyDTO deleteCompany(String idCompany) {
         Company company = companyRepository.findById(idCompany)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy id company!"));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy id company!"));
         companyRepository.delete(company);
         return companyMapper.companyToCompanyDTO(company);
     }

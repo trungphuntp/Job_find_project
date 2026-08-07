@@ -1,8 +1,9 @@
 package com.project.codinviec_core_service.service.imp;
+import com.project.codinviec_core_service.enums.ResourceErrorCode;
+import com.project.codinviec_core_service.exception.AppException;
 
 import com.project.codinviec_core_service.dto.DegreeLevelDTO;
 import com.project.codinviec_core_service.entity.DegreeLevel;
-import com.project.codinviec_core_service.exception.common.NotFoundIdExceptionHandler;
 import com.project.codinviec_core_service.mapper.DegreeLevelMapper;
 import com.project.codinviec_core_service.repository.DegreeLevelRepository;
 import com.project.codinviec_core_service.request.DegreeLevelRequest;
@@ -63,7 +64,7 @@ public class DegreeLevelServiceImp implements DegreeLevelService {
     @Override
     public DegreeLevelDTO getById(int id) {
         DegreeLevel degreeLevel = degreeLevelRepository.findById(id)
-                        .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy DegreeLevel ID: " + id));
+                        .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy DegreeLevel ID: " + id));
         return degreeLevelMapper.toDTO(degreeLevel);
     }
 
@@ -78,7 +79,7 @@ public class DegreeLevelServiceImp implements DegreeLevelService {
     @Transactional
     public DegreeLevelDTO update(int id, DegreeLevelRequest dto) {
         degreeLevelRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy DegreeLevel ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy DegreeLevel ID: " + id));
         DegreeLevel entity = degreeLevelMapper.updateDegreeLevel(id, dto);
         return degreeLevelMapper.toDTO(degreeLevelRepository.save(entity));
     }
@@ -87,7 +88,7 @@ public class DegreeLevelServiceImp implements DegreeLevelService {
     @Transactional
     public void delete(int id) {
         DegreeLevel degreeLevel = degreeLevelRepository.findById(id)
-                .orElseThrow(() -> new NotFoundIdExceptionHandler("Không tìm thấy DegreeLevel ID: " + id));
+                .orElseThrow(() -> new AppException(ResourceErrorCode.NOT_FOUND, "Không tìm thấy DegreeLevel ID: " + id));
         degreeLevelRepository.delete(degreeLevel);
     }
 }
